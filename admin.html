@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Cartelera - Modo Acumulativo</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: #f0f2f5; padding: 20px; color: #333; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 8px solid #2e314f; margin-bottom: 20px; }
+        h2 { color: #2e314f; margin-top: 0; font-size: 1.2rem; }
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 0.8rem; color: #666; text-transform: uppercase; }
+        input[type="text"], textarea, input[type="file"] { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        select { width: 100%; padding: 10px; margin-top: 5px; border-radius: 8px; border: 1px solid #ccc; }
+        
+        .btn-main { width: 100%; background: #2e314f; color: white; padding: 15px; border-radius: 8px; font-weight: bold; border: none; cursor: pointer; margin-top: 20px; font-size: 1rem; }
+        .btn-main:hover { background: #1a1c2e; }
+
+        .historial-item { background: white; padding: 15px; border-radius: 10px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #ddd; }
+        .tipo-tag { font-size: 0.7rem; padding: 3px 7px; border-radius: 4px; font-weight: bold; margin-right: 10px; }
+        .tag-central { background: #e3f2fd; color: #1976d2; }
+        .tag-zocalo { background: #f3e5f5; color: #7b1fa2; }
+        .tag-foto { background: #fff3e0; color: #f57c00; }
+        .btn-del { background: #ffeded; color: #e74c3c; border: none; padding: 8px; border-radius: 6px; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="card">
+        <h2>➕ Agregar Nuevo Contenido</h2>
+        <p style="font-size: 0.8rem; color: #888;">Lo que cargues aquí se sumará a lo que ya se está mostrando.</p>
+        
+        <label>¿Qué vas a subir?</label>
+        <select id="tipo-carga" onchange="cambiarInterfaz()">
+            <option value="central">Mensaje Central (Escalera)</option>
+            <option value="zocalo">Aviso para el Zócalo (Abajo)</option>
+            <option value="foto">Imagen / Foto</option>
+        </select>
+
+        <div id="campo-texto">
+            <label>Contenido del mensaje:</label>
+            <input type="text" id="input-contenido" placeholder="Escribe aquí...">
+        </div>
+
+        <div id="campo-foto" style="display:none;">
+            <label>Seleccionar Imagen:</label>
+            <input type="file" id="input-foto" accept="image/*">
+        </div>
+
+        <button class="btn-main" onclick="guardarNuevo()">➕ SUMAR A LA CARTELERA</button>
+    </div>
+
+    <div id="lista-activos">
+        <h3 style="font-size: 1rem; color: #2e314f;">Contenido actual en pantalla:</h3>
+        <div id="items-historial"></div>
+    </div>
+</div>
+
+<script>
+    let db;
+    const request = indexedDB.open("CarteleraAcumulativa", 1);
+
+    request.onupgradeneeded = (e) => {
+        db = e.target.result;
+        db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+    };
+
+    request.onsuccess = (e) => {
+        db = e.target.result;
+        renderHistorial();
+    };
+
+    function cambiarInterfaz() {
+        const tipo = document.getElementById('tipo-carga').value;
+        document.getElementById('campo-texto').style.display = tipo === 'foto' ? 'none' : 'block';
+        document.getElementById('campo-foto').style.display = tipo === 'foto' ? 'block' : 'none';
+    }
+
+    async function guardarNuevo() {
+        const tipo = document.getElementById('tipo-carga').value;
+        const contenido = document.getElementById('input-contenido').value;
+        const fileInput = document.getElementById('input-foto');
+        
+        let dataToSave = { tipo: tipo, fecha: new Date().getTime() };
+
+        if (tipo === 'foto') {
+            if (fileInput.files.length === 0) return alert("Selecciona una foto");
+            dataToSave.contenido = await toBase64(fileInput.files[0]);
+        } else {
+            if (!contenido) return alert("Escribe un mensaje");
+            dataToSave.contenido = contenido;
+        }
+
+        const tx = db.transaction("items", "readwrite");
+        tx.objectStore("items").add(dataToSave).onsuccess = () => {
+            document.getElementById('input-contenido').value = '';
+            document.getElementById('input-foto').value = '';
+            actualizarCarteleraTotal();
+        };
+    }
+
+    function actualizarCarteleraTotal() {
+        const tx = db.transaction("items", "readonly");
+        const store = tx.objectStore("items");
+        store.getAll().onsuccess = (e) => {
+            const todos = e.target.result;
+            const dataFinal = {
+                texto: todos.filter(i => i.tipo === 'central').map(i => i.contenido).join('\n'),
+                zocalo: todos.filter(i => i.tipo === 'zocalo').map(i => i.contenido).join('  ———  '),
+                fotos: todos.filter(i => i.tipo === 'foto').map(i => i.contenido)
+            };
+            localStorage.setItem('carteleraData', JSON.stringify(dataFinal));
+            renderHistorial();
+        };
+    }
+
+    function renderHistorial() {
+        const container = document.getElementById('items-historial');
+        container.innerHTML = '';
+        db.transaction("items").objectStore("items").getAll().onsuccess = (e) => {
+            e.target.result.forEach(item => {
+                const div = document.createElement('div');
+                div.className = 'historial-item';
+                const resumen = item.tipo === 'foto' ? 'Imagen cargada' : item.contenido.substring(0,30);
+                div.innerHTML = `
+                    <div>
+                        <span class="tipo-tag tag-${item.tipo}">${item.tipo.toUpperCase()}</span>
+                        <span>${resumen}</span>
+                    </div>
+                    <button class="btn-del" onclick="eliminarItem(${item.id})">🗑️</button>
+                `;
+                container.appendChild(div);
+            });
+        };
+    }
+
+    function eliminarItem(id) {
+        db.transaction("items", "readwrite").objectStore("items").delete(id).onsuccess = () => {
+            actualizarCarteleraTotal();
+        };
+    }
+
+    const toBase64 = f => new Promise(r => {
+        const rd = new FileReader(); rd.readAsDataURL(f); rd.onload = () => r(rd.result);
+    });
+</script>
+</body>
+</html>

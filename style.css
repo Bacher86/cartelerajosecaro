@@ -1,0 +1,111 @@
+body { 
+    margin: 0; background-color: #2e314f; color: white; 
+    font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; 
+    display: flex; flex-direction: column; 
+}
+
+header { 
+    height: 12vh; background: rgba(0,0,0,0.5); 
+    display: flex; justify-content: space-between; align-items: center; 
+    padding: 0 40px; border-bottom: 2px solid #d4af37;
+}
+
+#reloj { font-size: 4rem; font-weight: 200; }
+#fecha-greg { font-size: 1.4rem; color: #d4af37; font-weight: 700; }
+
+.contenedor-dividido { flex: 1; display: flex; height: 80vh; overflow: hidden; }
+
+/* COLUMNA TEXTO - CENTRADO TOTAL */
+.col-texto { 
+    width: 45%; 
+    height: 100%; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    position: relative; 
+    overflow: hidden;
+    transition: width 0.5s ease; /* Transición suave para la expansión */
+}
+
+#escalera-mensajes {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center; /* Centro gravitacional del texto */
+}
+
+.mensaje-item {
+    position: absolute; /* Superposición para control total del JS */
+    width: 90%;
+    text-align: center;
+    transition: all 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+    opacity: 0;
+    transform: translateY(150px) scale(0.5); /* Punto de partida invisible */
+    line-height: 1.1;
+}
+
+/* MENSAJE EN CENTRO (ENFOCADO) */
+.mensaje-item.enfocado {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    font-size: 4.8rem;
+    font-weight: 800;
+    color: #f5d76e;
+    z-index: 10;
+}
+
+/* MENSAJE ARRIBA (YA PASÓ) */
+.mensaje-item.anterior {
+    opacity: 0.05; 
+    transform: translateY(-280px) scale(0.7);
+    font-size: 2rem;
+    color: white;
+}
+
+/* MENSAJE ABAJO (EL QUE VIENE) */
+.mensaje-item.proximo {
+    opacity: 0.05;
+    transform: translateY(280px) scale(0.7);
+    font-size: 2rem;
+    color: white;
+}
+
+/* COLUMNA FOTOS */
+.col-fotos { 
+    width: 55%; 
+    padding: 20px; 
+    box-sizing: border-box; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    transition: width 0.5s ease;
+}
+
+.marco-foto { 
+    width: 100%; height: 100%; display: flex; align-items: center; 
+    justify-content: center; background: rgba(0,0,0,0.1); border-radius: 20px;
+}
+
+#foto-principal { 
+    max-width: 100%; max-height: 100%; border-radius: 10px; 
+    object-fit: contain; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+
+/* --- CLASES PARA PANTALLA COMPLETA --- */
+.full-width {
+    width: 100% !important;
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ZÓCALO */
+.noticiero { height: 8vh; background: #5d1a1a; display: flex; align-items: center; overflow: hidden; }
+.tag-noticia { background: #d4af37; color: #1a1a1a; padding: 0 30px; height: 100%; display: flex; align-items: center; font-weight: 900; font-size: 1.5rem; }
+.marquee { flex: 1; overflow: hidden; }
+.marquee span { display: inline-block; padding-left: 100%; animation: scroll 30s linear infinite; font-size: 2.5rem; white-space: nowrap; }
+@keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-150%); } }

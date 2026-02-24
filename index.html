@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartelera Digital</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div class="logo-container"><img src="logo.png" alt="logo" id="logo-institucional"></div>
+        <div class="fechas-container">
+            <div id="fecha-greg"></div>
+            <div id="fecha-heb"></div>
+        </div>
+        <div id="reloj">00:00</div>
+    </header>
+
+    <main class="contenedor-dividido">
+        <section class="col-texto">
+            <div id="escalera-mensajes">
+                </div>
+        </section>
+
+        <section class="col-fotos">
+            <div class="marco-foto">
+                <img id="foto-principal" src="" style="display:none;">
+            </div>
+        </section>
+    </main>
+
+    <footer class="noticiero">
+        <div class="tag-noticia">AVISOS</div>
+        <div class="marquee">
+            <span id="texto-zocalo">Cargando avisos...</span>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>
