@@ -1,59 +1,46 @@
+// Configuración de Firebase obtenida de tu captura
+const firebaseConfig = {
+  apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
+  authDomain: "cartelera-nube.firebaseapp.com",
+  databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
+  projectId: "cartelera-nube",
+  storageBucket: "cartelera-nube.firebasestorage.app",
+  messagingSenderId: "333887658907",
+  appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
+};
+
+// Inicializar Firebase
+firebase.initializeApp(firebaseConfig);
+const dbRemota = firebase.database();
+
 let listaFotos = [];
 let idxFoto = 0;
 let idxTexto = 0;
-let lastDataStr = "";
 let listaTextos = [];
 
-function actualizarReloj() {
-    const ahora = new Date();
-    document.getElementById('reloj').innerText = ahora.getHours() + ":" + ahora.getMinutes().toString().padStart(2, '0');
-    document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
-    try {
-        const heb = new Intl.DateTimeFormat('es-AR-u-ca-hebrew', {day: 'numeric', month: 'long', year: 'numeric'})
-            .format(ahora)
-            .replace(" AM", ""); // Esto borra el AM de la pantalla
-        document.getElementById('fecha-heb').innerText = heb;
-    } catch(e) {}
-}
+// ESCUCHAR CAMBIOS EN TIEMPO REAL
+dbRemota.ref('carteleraData').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (!data) return;
 
-function syncData() {
-    const raw = localStorage.getItem('carteleraData');
-    if (!raw || raw === lastDataStr) return;
-    lastDataStr = raw;
-    const data = JSON.parse(raw);
-
-    // Zócalo
-    if (data.zocalo) document.getElementById('texto-zocalo').innerText = data.zocalo + " ——— ";
-
-    // Procesar datos
-    listaTextos = data.texto ? data.texto.split('\n').filter(t => t.trim() !== "") : [];
-    listaFotos = data.fotos || [];
-
-    const colTexto = document.querySelector('.col-texto');
-    const colFotos = document.querySelector('.col-fotos');
-    const container = document.getElementById('escalera-mensajes');
-
-    // LÓGICA DE PANTALLA COMPLETA / EXPANSIÓN
-    if (listaTextos.length > 0 && listaFotos.length > 0) {
-        // AMBOS PRESENTES
-        colTexto.classList.remove('hidden', 'full-width');
-        colFotos.classList.remove('hidden', 'full-width');
-    } 
-    else if (listaTextos.length > 0 && listaFotos.length === 0) {
-        // SOLO TEXTO
-        colTexto.classList.add('full-width');
-        colTexto.classList.remove('hidden');
-        colFotos.classList.add('hidden');
-    } 
-    else if (listaTextos.length === 0 && listaFotos.length > 0) {
-        // SOLO FOTOS
-        colFotos.classList.add('full-width');
-        colFotos.classList.remove('hidden');
-        colTexto.classList.add('hidden');
+    // 1. Zócalo
+    if (data.zocalo) {
+        document.getElementById('texto-zocalo').innerText = data.zocalo + " ——— ";
     }
 
-    // Dibujar mensajes
+    // 2. Fotos
+    if (data.fotos && data.fotos.length > 0) {
+        listaFotos = data.fotos;
+        idxFoto = 0;
+        document.getElementById('foto-principal').src = listaFotos[0];
+        document.getElementById('foto-principal').style.display = 'block';
+    }
+
+    // 3. Textos (Escalera)
+    listaTextos = data.texto ? data.texto.split('\n').filter(t => t.trim() !== "") : ["BIENVENIDOS"];
+    const container = document.getElementById('escalera-mensajes');
     container.innerHTML = '';
+    
     listaTextos.forEach((t) => {
         const div = document.createElement('div');
         div.className = 'mensaje-item';
@@ -63,14 +50,7 @@ function syncData() {
 
     idxTexto = 0;
     actualizarPosiciones();
-
-    // Fotos
-    if (listaFotos.length > 0) {
-        document.getElementById('foto-principal').src = listaFotos[0];
-        document.getElementById('foto-principal').style.display = 'block';
-        idxFoto = 0;
-    }
-}
+});
 
 function actualizarPosiciones() {
     const items = document.querySelectorAll('.mensaje-item');
@@ -99,13 +79,31 @@ function rotarTexto() {
 function rotarFoto() {
     if (listaFotos.length > 1) {
         idxFoto = (idxFoto + 1) % listaFotos.length;
-        document.getElementById('foto-principal').src = listaFotos[idxFoto];
+        const img = document.getElementById('foto-principal');
+        img.style.opacity = 0;
+        setTimeout(() => {
+            img.src = listaFotos[idxFoto];
+            img.style.opacity = 1;
+        }, 500);
     }
 }
 
+function actualizarReloj() {
+    const ahora = new Date();
+    document.getElementById('reloj').innerText = ahora.getHours() + ":" + ahora.getMinutes().toString().padStart(2, '0');
+    document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
+    try {
+        const heb = new Intl.DateTimeFormat('es-AR-u-ca-hebrew', {day: 'numeric', month: 'long', year: 'numeric'}).format(ahora).replace(" AM", "");
+        document.getElementById('fecha-heb').innerText = heb;
+    } catch(e) {}
+}
+
+setInterval(actualizarReloj, 1000);
+setInterval(rotarTexto, 6000);
+setInterval(rotarFoto, 8000);
 actualizarReloj();
-syncData();
 setInterval(actualizarReloj, 1000);
 setInterval(syncData, 3000);
 setInterval(rotarTexto, 6000);
+
 setInterval(rotarFoto, 8000);
