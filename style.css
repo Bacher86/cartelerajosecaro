@@ -4,12 +4,28 @@ body {
     display: flex; flex-direction: column; 
 }
 
-header { 
-    height: 12vh; background: rgba(0,0,0,0.5); 
-    display: flex; justify-content: space-between; align-items: center; 
-    padding: 0 40px; border-bottom: 2px solid #d4af37;
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2%;
+    height: 12vh; /* Esto define el alto total de la barra de arriba */
+    background-color: #2e314f; /* Tu color oscuro */
+    color: white;
 }
 
+.logo-container {
+    height: 100%; /* Que ocupe todo el alto del header */
+    display: flex;
+    align-items: center;
+}
+
+#logo-institucional {
+    height: 80%; /* Ajustá este porcentaje (70%, 90%, etc.) para agrandar o achicar el logo */
+    width: auto; /* Mantiene la proporción para que no se estire */
+    object-fit: contain;
+    padding: 5px;
+}
 #reloj { font-size: 4rem; font-weight: 200; }
 #fecha-greg { font-size: 1.4rem; color: #d4af37; font-weight: 700; }
 
@@ -108,4 +124,5 @@ header {
 .tag-noticia { background: #d4af37; color: #1a1a1a; padding: 0 30px; height: 100%; display: flex; align-items: center; font-weight: 900; font-size: 1.5rem; }
 .marquee { flex: 1; overflow: hidden; }
 .marquee span { display: inline-block; padding-left: 100%; animation: scroll 30s linear infinite; font-size: 2.5rem; white-space: nowrap; }
+
 @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-150%); } }
