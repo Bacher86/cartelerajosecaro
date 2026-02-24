@@ -102,8 +102,3 @@ setInterval(actualizarReloj, 1000);
 setInterval(rotarTexto, 6000);
 setInterval(rotarFoto, 8000);
 actualizarReloj();
-setInterval(actualizarReloj, 1000);
-setInterval(syncData, 3000);
-setInterval(rotarTexto, 6000);
-
-setInterval(rotarFoto, 8000);

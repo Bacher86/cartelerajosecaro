@@ -1,37 +1,119 @@
-<!DOCTYPE html><script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Control - Cartelera</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        button { background: #2e314f; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #454a75; }
+        .item-historial { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
+        .btn-borrar { background: #d9534f; }
+    </style>
+</head>
+<body>
 
-<script>
-    // PEGA AQUÍ EL MISMO objeto firebaseConfig que está arriba
-    const firebaseConfig = {
-      apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
-      authDomain: "cartelera-nube.firebaseapp.com",
-      databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
-      projectId: "cartelera-nube",
-      storageBucket: "cartelera-nube.firebasestorage.app",
-      messagingSenderId: "333887658907",
-      appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const dbRemota = firebase.database();
+    <div class="card">
+        <h2>Nuevo Anuncio / Foto</h2>
+        <select id="tipo">
+            <option value="central">Mensaje Central (Escalera)</option>
+            <option value="zocalo">Zócalo (Marquesina inferior)</option>
+            <option value="foto">URL de Foto (JPG/PNG)</option>
+        </select>
+        <textarea id="contenido" placeholder="Escribe el texto o pega la URL de la imagen aquí..."></textarea>
+        <button onclick="agregarItem()">Sumar a la Cartelera</button>
+    </div>
 
-    // MODIFICA TU FUNCIÓN actualizarCarteleraTotal POR ESTA:
-    function actualizarCarteleraTotal() {
-        const tx = db.transaction("items", "readonly");
-        const store = tx.objectStore("items");
-        store.getAll().onsuccess = (e) => {
-            const todos = e.target.result;
-            const dataFinal = {
-                texto: todos.filter(i => i.tipo === 'central').map(i => i.contenido).join('\n'),
-                zocalo: todos.filter(i => i.tipo === 'zocalo').map(i => i.contenido).join('  ———  '),
-                fotos: todos.filter(i => i.tipo === 'foto').map(i => i.contenido)
-            };
-            
-            // Subir a Firebase
-            dbRemota.ref('carteleraData').set(dataFinal);
+    <div class="card">
+        <h2>Contenido Actual</h2>
+        <div id="lista-items"></div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+    <script>
+        // Configuración de tu Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
+            authDomain: "cartelera-nube.firebaseapp.com",
+            databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
+            projectId: "cartelera-nube",
+            storageBucket: "cartelera-nube.firebasestorage.app",
+            messagingSenderId: "333887658907",
+            appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const dbRemota = firebase.database();
+
+        // Base de datos local (IndexedDB) para gestionar el historial en este navegador
+        let db;
+        const request = indexedDB.open("CarteleraDB", 1);
+        request.onupgradeneeded = (e) => {
+            db = e.target.result;
+            db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+        };
+        request.onsuccess = (e) => {
+            db = e.target.result;
             renderHistorial();
         };
-    }
-    // ... (el resto de tus funciones como renderHistorial y eliminarItem siguen igual)
-</script>
+
+        function agregarItem() {
+            const tipo = document.getElementById('tipo').value;
+            const contenido = document.getElementById('contenido').value;
+            if(!contenido) return;
+
+            const tx = db.transaction("items", "readwrite");
+            tx.objectStore("items").add({ tipo, contenido });
+            tx.oncomplete = () => {
+                document.getElementById('contenido').value = '';
+                actualizarCarteleraTotal();
+            };
+        }
+
+        function actualizarCarteleraTotal() {
+            const tx = db.transaction("items", "readonly");
+            const store = tx.objectStore("items");
+            store.getAll().onsuccess = (e) => {
+                const todos = e.target.result;
+                const dataFinal = {
+                    texto: todos.filter(i => i.tipo === 'central').map(i => i.contenido).join('\n'),
+                    zocalo: todos.filter(i => i.tipo === 'zocalo').map(i => i.contenido).join('  ———  '),
+                    fotos: todos.filter(i => i.tipo === 'foto').map(i => i.contenido)
+                };
+                
+                // ENVIAR A LA NUBE
+                dbRemota.ref('carteleraData').set(dataFinal);
+                renderHistorial();
+            };
+        }
+
+        function renderHistorial() {
+            const lista = document.getElementById('lista-items');
+            lista.innerHTML = '';
+            const tx = db.transaction("items", "readonly");
+            tx.objectStore("items").openCursor().onsuccess = (e) => {
+                const cursor = e.target.result;
+                if (cursor) {
+                    const div = document.createElement('div');
+                    div.className = 'item-historial';
+                    div.innerHTML = `
+                        <span><strong>[${cursor.value.tipo.toUpperCase()}]</strong> ${cursor.value.contenido.substring(0, 50)}...</span>
+                        <button class="btn-borrar" onclick="eliminarItem(${cursor.value.id})">Borrar</button>
+                    `;
+                    lista.appendChild(div);
+                    cursor.continue();
+                }
+            };
+        }
+
+        function eliminarItem(id) {
+            const tx = db.transaction("items", "readwrite");
+            tx.objectStore("items").delete(id);
+            tx.oncomplete = () => actualizarCarteleraTotal();
+        }
+    </script>
+</body>
 </html>
