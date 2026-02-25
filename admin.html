@@ -19,14 +19,14 @@
         <label>Tipo de Contenido:</label>
         <select id="tipo">
             <option value="texto">Mensaje Central</option>
-            <option value="foto">Foto Destacada (Normal)</option>
-            <option value="foto-completa">Foto (Pantalla Completa)</option>
-            <option value="zocalo">Zócalo Inferior (Marquesina)</option>
-            <option value="evento">Mensaje Programado (Bloqueo)</option>
+            <option value="foto">Foto (Normal - Link URL)</option>
+            <option value="foto-completa">Foto (Pantalla Completa - Link URL)</option>
+            <option value="zocalo">Zócalo Inferior</option>
+            <option value="evento">Mensaje Programado</option>
         </select>
 
         <div id="campos-extra">
-            <textarea id="contenido" placeholder="Escribe el mensaje o pega el link de la foto"></textarea>
+            <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto (URL)"></textarea>
             <div id="horarios" style="display:none;">
                 <input type="time" id="inicio"> a <input type="time" id="fin">
             </div>
@@ -63,6 +63,8 @@
             const ini = document.getElementById('inicio').value;
             const fin = document.getElementById('fin').value;
 
+            if(!cont && tipo !== 'zocalo') return alert("Escribe algo o pega un link");
+
             db.once('value', s => {
                 let data = s.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
                 if (tipo === 'texto') data.texto.push(cont);
@@ -73,7 +75,7 @@
                 
                 db.set(data).then(() => {
                     document.getElementById('contenido').value = "";
-                    alert("Cargado con éxito");
+                    alert("¡Cargado!");
                 });
             });
         }
@@ -84,10 +86,10 @@
             const data = s.val();
             if(!data) return;
 
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">TXT: ${t.substring(0,20)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
-            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">FOTO: ${f.formato} <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
+            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">MSG: ${t.substring(0,15)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
+            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">FOTO (${f.formato}) <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
             if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">EVT: ${e.inicio} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
-            if(data.zocalo) h.innerHTML += `<div class="historial-item">ZOC: ${data.zocalo.substring(0,20)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
+            if(data.zocalo) h.innerHTML += `<div class="historial-item">ZOC: ${data.zocalo.substring(0,15)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
         });
 
         function borrar(cat, i) {
@@ -101,3 +103,4 @@
     </script>
 </body>
 </html>
+
