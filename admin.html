@@ -34,25 +34,36 @@
             <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto (URL)" rows="4"></textarea>
             
             <div id="horarios" style="display:none; background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ddd;">
-                <label style="font-weight: bold; display: block; margin-bottom: 10px;">Repetir los días:</label>
-                <div class="dias-selector">
-                    <label><input type="checkbox" class="dia-check" value="1" checked> Lun</label>
-                    <label><input type="checkbox" class="dia-check" value="2" checked> Mar</label>
-                    <label><input type="checkbox" class="dia-check" value="3" checked> Mié</label>
-                    <label><input type="checkbox" class="dia-check" value="4" checked> Jue</label>
-                    <label><input type="checkbox" class="dia-check" value="5" checked> Vie</label>
-                    <label><input type="checkbox" class="dia-check" value="6"> Sáb</label>
-                    <label><input type="checkbox" class="dia-check" value="0"> Dom</label>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex:1;">
-                        <label>Inicio:</label> <input type="time" id="inicio">
-                    </div>
-                    <div style="flex:1;">
-                        <label>Fin:</label> <input type="time" id="fin">
-                    </div>
-                </div>
-            </div>
+    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Vigencia (Opcional):</label>
+    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+        <div style="flex:1;">
+            <label>Desde:</label> <input type="date" id="fecha-inicio">
+        </div>
+        <div style="flex:1;">
+            <label>Hasta:</label> <input type="date" id="fecha-fin">
+        </div>
+    </div>
+
+    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Repetir los días:</label>
+    <div class="dias-selector">
+        <label><input type="checkbox" class="dia-check" value="1" checked> Lun</label>
+        <label><input type="checkbox" class="dia-check" value="2" checked> Mar</label>
+        <label><input type="checkbox" class="dia-check" value="3" checked> Mié</label>
+        <label><input type="checkbox" class="dia-check" value="4" checked> Jue</label>
+        <label><input type="checkbox" class="dia-check" value="5" checked> Vie</label>
+        <label><input type="checkbox" class="dia-check" value="6"> Sáb</label>
+        <label><input type="checkbox" class="dia-check" value="0"> Dom</label>
+    </div>
+
+    <div style="display: flex; gap: 10px;">
+        <div style="flex:1;">
+            <label>Hora Inicio:</label> <input type="time" id="inicio">
+        </div>
+        <div style="flex:1;">
+            <label>Hora Fin:</label> <input type="time" id="fin">
+        </div>
+    </div>
+</div>
         </div>
 
         <button id="btnSubir">Sumar a la Cartelera</button>
@@ -139,4 +150,5 @@
     </script>
 </body>
 </html>
+
 
