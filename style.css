@@ -58,19 +58,23 @@ header {
 }
 #escalera-mensajes { position: relative; width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; }
 
+/* 1. Todos los mensajes nacen invisibles y "atrás" */
 .mensaje-item {
     position: absolute; 
     width: 90%; 
     text-align: center;
-    transition: all 0.8s ease-in-out;
+    transition: all 1s ease-in-out; /* Transición suave de 1 segundo */
     opacity: 0; 
-    transform: translateY(30px) scale(0.9); /* Un efecto más sutil */
+    visibility: hidden;
+    transform: translateY(20px); /* Viene un poquito desde abajo */
     line-height: 1.1;
 }
 
+/* 2. Solo el que tiene la clase 'enfocado' se hace visible */
 .mensaje-item.enfocado { 
     opacity: 1; 
-    transform: translateY(0) scale(1); 
+    visibility: visible;
+    transform: translateY(0); 
     font-size: 4.5rem; 
     font-weight: 800; 
     color: #f5d76e; 
@@ -92,5 +96,6 @@ footer { height: 8vh; background: #5d1a1a; display: flex; align-items: center; o
     padding: 40px; font-weight: 900; line-height: 1.2;
     border-top: 3px solid #d4af37; border-bottom: 3px solid #d4af37;
 }
+
 
 
