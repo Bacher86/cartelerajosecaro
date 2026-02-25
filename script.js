@@ -1,4 +1,12 @@
-const firebaseConfig = { /* TUS CREDENCIALES */ };
+const firebaseConfig = {
+    apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
+    authDomain: "cartelera-nube.firebaseapp.com",
+    databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
+    projectId: "cartelera-nube",
+    storageBucket: "cartelera-nube.firebasestorage.app",
+    messagingSenderId: "333887658907",
+    appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
+};
 firebase.initializeApp(firebaseConfig);
 const dbRemota = firebase.database();
 
@@ -6,7 +14,7 @@ let dataActual = { texto: [], fotos: [], zocalo: "", eventos: [] };
 let idxFoto = 0;
 let idxTexto = 0;
 
-// Escuchar cambios
+// Escuchar cambios de Firebase
 dbRemota.ref('carteleraData').on('value', (snapshot) => {
     const val = snapshot.val();
     if (val) {
@@ -16,16 +24,23 @@ dbRemota.ref('carteleraData').on('value', (snapshot) => {
 });
 
 function renderTextosEstaticos() {
-    document.getElementById('texto-zocalo').innerText = dataActual.zocalo + " ——— ";
+    // Actualiza el zócalo
+    const zocaloElemento = document.getElementById('texto-zocalo');
+    if (zocaloElemento) zocaloElemento.innerText = (dataActual.zocalo || "") + " ——— ";
+
+    // Actualiza los mensajes centrales
     const container = document.getElementById('escalera-mensajes');
-    container.innerHTML = '';
-    dataActual.texto.forEach(t => {
-        const div = document.createElement('div');
-        div.className = 'mensaje-item';
-        div.innerText = t;
-        container.appendChild(div);
-    });
-    actualizarPosiciones();
+    if (container) {
+        container.innerHTML = '';
+        if (dataActual.texto) {
+            dataActual.texto.forEach((t, index) => {
+                const div = document.createElement('div');
+                div.className = 'mensaje-item' + (index === 0 ? ' enfocado' : '');
+                div.innerText = t;
+                container.appendChild(div);
+            });
+        }
+    }
 }
 
 function rotarFoto() {
@@ -37,15 +52,14 @@ function rotarFoto() {
     const colTexto = document.querySelector('.col-texto');
     const colFotos = document.querySelector('.col-fotos');
 
-    img.src = foto.url;
+    if (img) img.src = foto.url;
     
-    // LOGICA PANTALLA COMPLETA
     if (foto.formato === 'completa') {
-        colTexto.style.display = 'none';
-        colFotos.style.width = '100%';
+        if (colTexto) colTexto.style.display = 'none';
+        if (colFotos) colFotos.style.width = '100%';
     } else {
-        colTexto.style.display = 'flex';
-        colFotos.style.width = '50%';
+        if (colTexto) colTexto.style.display = 'flex';
+        if (colFotos) colFotos.style.width = '55%';
     }
 }
 
@@ -56,25 +70,27 @@ function verificarEventos() {
     const eventoActivo = dataActual.eventos?.find(e => horaActual >= e.inicio && horaActual <= e.fin);
     
     const overlay = document.getElementById('overlay-evento');
-    if (eventoActivo) {
-        overlay.innerText = eventoActivo.msg;
-        overlay.style.display = 'flex'; // BLOQUEO TOTAL
-    } else {
-        overlay.style.display = 'none';
+    if (overlay) {
+        if (eventoActivo) {
+            overlay.innerText = eventoActivo.msg;
+            overlay.style.display = 'flex';
+        } else {
+            overlay.style.display = 'none';
+        }
     }
 }
 
-// Reloj y bucles
-setInterval(() => {
+function actualizarReloj() {
     const ahora = new Date();
-    document.getElementById('reloj').innerText = ahora.getHours() + ":" + ahora.getMinutes().toString().padStart(2, '0');
+    const reloj = document.getElementById('reloj');
+    if (reloj) reloj.innerText = ahora.getHours() + ":" + ahora.getMinutes().toString().padStart(2, '0');
+    
+    const fechaG = document.getElementById('fecha-greg');
+    if (fechaG) fechaG.innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
+    
     verificarEventos();
-}, 1000);
+}
 
+// Iniciar bucles
+setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 8000);
-setInterval(() => {
-    if (dataActual.texto.length > 1) {
-        idxTexto = (idxTexto + 1) % dataActual.texto.length;
-        actualizarPosiciones();
-    }
-}, 6000);
