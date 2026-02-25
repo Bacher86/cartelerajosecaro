@@ -75,12 +75,18 @@ function rotarFoto() {
 function verificarEventos() {
     const ahora = new Date();
     const h = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+    
+    // Buscamos si hay un evento para el minuto actual
     const evento = (dataActual.eventos || []).find(e => h >= e.inicio && h <= e.fin);
     const overlay = document.getElementById('overlay-evento');
+    
     if (overlay) {
         if (evento) {
             overlay.innerText = evento.msg;
             overlay.style.display = 'flex';
+            // Opcional: Podés agregar un borde dorado arriba y abajo para que destaque
+            overlay.style.borderTop = "4px solid #d4af37";
+            overlay.style.borderBottom = "4px solid #d4af37";
         } else {
             overlay.style.display = 'none';
         }
@@ -90,4 +96,5 @@ function verificarEventos() {
 setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 8000);
 actualizarReloj();
+
 
