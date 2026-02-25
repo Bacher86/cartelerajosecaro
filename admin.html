@@ -11,6 +11,10 @@
         button:hover { background: #3d4168; }
         .historial-item { background: #eee; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; border-radius: 4px; }
         .btn-borrar { width: auto; background: #e74c3c; margin: 0; padding: 5px 10px; font-size: 0.8rem; }
+        /* Estilo para los checks de días */
+        .dias-selector { display: flex; justify-content: space-between; background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+        .dias-selector label { font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .dias-selector input { width: auto; margin-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -28,9 +32,26 @@
 
         <div id="campos-extra">
             <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto (URL)" rows="4"></textarea>
-            <div id="horarios" style="display:none; background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
-                <label>Hora Inicio:</label> <input type="time" id="inicio">
-                <label>Hora Fin:</label> <input type="time" id="fin">
+            
+            <div id="horarios" style="display:none; background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ddd;">
+                <label style="font-weight: bold; display: block; margin-bottom: 10px;">Repetir los días:</label>
+                <div class="dias-selector">
+                    <label><input type="checkbox" class="dia-check" value="1" checked> Lun</label>
+                    <label><input type="checkbox" class="dia-check" value="2" checked> Mar</label>
+                    <label><input type="checkbox" class="dia-check" value="3" checked> Mié</label>
+                    <label><input type="checkbox" class="dia-check" value="4" checked> Jue</label>
+                    <label><input type="checkbox" class="dia-check" value="5" checked> Vie</label>
+                    <label><input type="checkbox" class="dia-check" value="6"> Sáb</label>
+                    <label><input type="checkbox" class="dia-check" value="0"> Dom</label>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex:1;">
+                        <label>Inicio:</label> <input type="time" id="inicio">
+                    </div>
+                    <div style="flex:1;">
+                        <label>Fin:</label> <input type="time" id="fin">
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -54,17 +75,13 @@
             appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
         };
         
-        if (!firebase.apps.length) {
-            firebase.initializeApp(firebaseConfig);
-        }
+        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
         const db = firebase.database().ref('carteleraData');
 
-        // Mostrar/Ocultar horarios según selección
         document.getElementById('tipo').addEventListener('change', function() {
             document.getElementById('horarios').style.display = this.value === 'evento' ? 'block' : 'none';
         });
 
-        // Función Subir mejorada
         document.getElementById('btnSubir').onclick = function() {
             const tipo = document.getElementById('tipo').value;
             const cont = document.getElementById('contenido').value;
@@ -78,8 +95,6 @@
 
             db.once('value').then(s => {
                 let data = s.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
-                
-                // Asegurar que las listas existan
                 if(!data.texto) data.texto = [];
                 if(!data.fotos) data.fotos = [];
                 if(!data.eventos) data.eventos = [];
@@ -90,35 +105,29 @@
                 else if (tipo === 'zocalo') data.zocalo = cont;
                 else if (tipo === 'evento') {
                     if(!ini || !fin) return alert("Poné hora de inicio y fin");
-                    data.eventos.push({msg: cont, inicio: ini, fin: fin});
+                    const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
+                    if(dias.length === 0) return alert("Seleccioná al menos un día");
+                    data.eventos.push({msg: cont, inicio: ini, fin: fin, dias: dias});
                 }
                 
                 return db.set(data);
             }).then(() => {
                 document.getElementById('contenido').value = "";
                 alert("¡Datos guardados con éxito!");
-            }).catch(err => {
-                alert("Error: " + err.message);
-            });
+            }).catch(err => alert("Error: " + err.message));
         };
 
-        // Escuchar cambios para el historial
         db.on('value', s => {
             const h = document.getElementById('historial');
             const data = s.val();
-            if(!data) {
-                h.innerHTML = "No hay datos cargados.";
-                return;
-            }
-            
+            if(!data) { h.innerHTML = "No hay datos."; return; }
             h.innerHTML = "";
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">Mensaje: ${t.substring(0,20)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
-            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">Foto ${f.formato}: ${f.url.substring(0,15)}... <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
-            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">Evento: ${e.inicio} a ${e.fin} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
-            if(data.zocalo) h.innerHTML += `<div class="historial-item">Zócalo: ${data.zocalo.substring(0,20)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
+            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">TXT: ${t.substring(0,20)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
+            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">FOTO: ${f.url.substring(0,15)}... <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
+            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">EVT (${e.dias ? e.dias.length : '7'} días): ${e.inicio} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
+            if(data.zocalo) h.innerHTML += `<div class="historial-item">ZOC: ${data.zocalo.substring(0,20)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
         });
 
-        // Función para borrar
         window.borrar = function(cat, i) {
             db.once('value').then(s => {
                 let data = s.val();
@@ -130,5 +139,4 @@
     </script>
 </body>
 </html>
-
 
