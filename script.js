@@ -16,22 +16,17 @@ let idxFoto = 0;
 
 function actualizarReloj() {
     const ahora = new Date();
-    
-    // Reloj
     const r = document.getElementById('reloj');
     if (r) r.innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
     
-    // Fecha Gregoriana
     const f = document.getElementById('fecha-greg');
     if (f) f.innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
     
-    // Fecha Hebrea
     const fh = document.getElementById('fecha-heb');
     if (fh) {
         const heb = new Intl.DateTimeFormat('es-AR-u-ca-hebrew', {day: 'numeric', month: 'long', year: 'numeric'}).format(ahora);
         fh.innerText = heb;
     }
-    
     verificarEventos();
 }
 
@@ -39,11 +34,9 @@ dbRemota.ref('carteleraData').on('value', (snapshot) => {
     const val = snapshot.val();
     if (val) {
         dataActual = val;
-        // Zócalo (sin guiones)
         const z = document.getElementById('texto-zocalo');
         if (z) z.innerText = (dataActual.zocalo || "");
         
-        // Mensajes
         const c = document.getElementById('escalera-mensajes');
         if (c) {
             c.innerHTML = '';
@@ -59,18 +52,13 @@ dbRemota.ref('carteleraData').on('value', (snapshot) => {
 
 function rotarFoto() {
     if (!dataActual.fotos || dataActual.fotos.length === 0) return;
-    
     idxFoto = (idxFoto + 1) % dataActual.fotos.length;
     const foto = dataActual.fotos[idxFoto];
     const img = document.getElementById('foto-principal');
     const colT = document.querySelector('.col-texto');
     const colF = document.querySelector('.col-fotos');
 
-    if (img) {
-        img.src = foto.url;
-        img.style.display = 'block';
-    }
-    
+    if (img) img.src = foto.url;
     if (foto.formato === 'completa') {
         if (colT) colT.style.display = 'none';
         if (colF) colF.style.width = '100%';
@@ -83,7 +71,16 @@ function rotarFoto() {
 function verificarEventos() {
     const ahora = new Date();
     const h = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-    const evento = (dataActual.eventos || []).find(e => h >= e.inicio && h <= e.fin);
+    const diaHoy = ahora.getDay(); // 0=Dom, 1=Lun, etc.
+
+    // Filtramos por hora Y por día seleccionado
+    const evento = (dataActual.eventos || []).find(e => {
+        const coincideHora = (h >= e.inicio && h <= e.fin);
+        // Si el evento no tiene array de días (es viejo), se muestra siempre. Si tiene, chequea hoy.
+        const coincideDia = e.dias ? e.dias.includes(diaHoy) : true;
+        return coincideHora && coincideDia;
+    });
+
     const overlay = document.getElementById('overlay-evento');
     if (overlay) {
         if (evento) {
@@ -98,6 +95,7 @@ function verificarEventos() {
 setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 8000);
 actualizarReloj();
+
 
 
 
