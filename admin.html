@@ -7,9 +7,10 @@
         body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
         .panel { background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
         input, select, button, textarea { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-        button { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; }
-        .historial-item { background: #eee; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; }
-        .btn-borrar { width: auto; background: #e74c3c; margin: 0; padding: 5px 10px; }
+        button { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; padding: 15px; border-radius: 5px; }
+        button:hover { background: #3d4168; }
+        .historial-item { background: #eee; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; border-radius: 4px; }
+        .btn-borrar { width: auto; background: #e74c3c; margin: 0; padding: 5px 10px; font-size: 0.8rem; }
     </style>
 </head>
 <body>
@@ -22,24 +23,26 @@
             <option value="foto">Foto (Normal - Link URL)</option>
             <option value="foto-completa">Foto (Pantalla Completa - Link URL)</option>
             <option value="zocalo">Zócalo Inferior</option>
-            <option value="evento">Mensaje Programado</option>
+            <option value="evento">Mensaje Programado (Bloqueo)</option>
         </select>
 
         <div id="campos-extra">
-            <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto (URL)"></textarea>
-            <div id="horarios" style="display:none;">
-                <input type="time" id="inicio"> a <input type="time" id="fin">
+            <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto (URL)" rows="4"></textarea>
+            <div id="horarios" style="display:none; background: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 15px;">
+                <label>Hora Inicio:</label> <input type="time" id="inicio">
+                <label>Hora Fin:</label> <input type="time" id="fin">
             </div>
         </div>
 
-        <button onclick="subir()">Sumar a la Cartelera</button>
+        <button id="btnSubir">Sumar a la Cartelera</button>
 
-        <h3>Historial / Borrar</h3>
-        <div id="historial"></div>
+        <h3>Historial Actual</h3>
+        <div id="historial">Cargando...</div>
     </div>
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
@@ -50,57 +53,82 @@
             messagingSenderId: "333887658907",
             appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
         };
-        firebase.initializeApp(firebaseConfig);
+        
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
         const db = firebase.database().ref('carteleraData');
 
-        document.getElementById('tipo').onchange = function() {
+        // Mostrar/Ocultar horarios según selección
+        document.getElementById('tipo').addEventListener('change', function() {
             document.getElementById('horarios').style.display = this.value === 'evento' ? 'block' : 'none';
-        };
+        });
 
-        function subir() {
+        // Función Subir mejorada
+        document.getElementById('btnSubir').onclick = function() {
             const tipo = document.getElementById('tipo').value;
             const cont = document.getElementById('contenido').value;
             const ini = document.getElementById('inicio').value;
             const fin = document.getElementById('fin').value;
 
-            if(!cont && tipo !== 'zocalo') return alert("Escribe algo o pega un link");
+            if(!cont && tipo !== 'zocalo') {
+                alert("Por favor completa el campo de contenido");
+                return;
+            }
 
-            db.once('value', s => {
+            db.once('value').then(s => {
                 let data = s.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
-                if (tipo === 'texto') data.texto.push(cont);
-                if (tipo === 'foto') data.fotos.push({url: cont, formato: 'normal'});
-                if (tipo === 'foto-completa') data.fotos.push({url: cont, formato: 'completa'});
-                if (tipo === 'zocalo') data.zocalo = cont;
-                if (tipo === 'evento') data.eventos.push({msg: cont, inicio: ini, fin: fin});
                 
-                db.set(data).then(() => {
-                    document.getElementById('contenido').value = "";
-                    alert("¡Cargado!");
-                });
-            });
-        }
+                // Asegurar que las listas existan
+                if(!data.texto) data.texto = [];
+                if(!data.fotos) data.fotos = [];
+                if(!data.eventos) data.eventos = [];
 
+                if (tipo === 'texto') data.texto.push(cont);
+                else if (tipo === 'foto') data.fotos.push({url: cont, formato: 'normal'});
+                else if (tipo === 'foto-completa') data.fotos.push({url: cont, formato: 'completa'});
+                else if (tipo === 'zocalo') data.zocalo = cont;
+                else if (tipo === 'evento') {
+                    if(!ini || !fin) return alert("Poné hora de inicio y fin");
+                    data.eventos.push({msg: cont, inicio: ini, fin: fin});
+                }
+                
+                return db.set(data);
+            }).then(() => {
+                document.getElementById('contenido').value = "";
+                alert("¡Datos guardados con éxito!");
+            }).catch(err => {
+                alert("Error: " + err.message);
+            });
+        };
+
+        // Escuchar cambios para el historial
         db.on('value', s => {
             const h = document.getElementById('historial');
-            h.innerHTML = "";
             const data = s.val();
-            if(!data) return;
-
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">MSG: ${t.substring(0,15)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
-            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">FOTO (${f.formato}) <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
-            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">EVT: ${e.inicio} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
-            if(data.zocalo) h.innerHTML += `<div class="historial-item">ZOC: ${data.zocalo.substring(0,15)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
+            if(!data) {
+                h.innerHTML = "No hay datos cargados.";
+                return;
+            }
+            
+            h.innerHTML = "";
+            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">Mensaje: ${t.substring(0,20)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
+            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">Foto ${f.formato}: ${f.url.substring(0,15)}... <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
+            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">Evento: ${e.inicio} a ${e.fin} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
+            if(data.zocalo) h.innerHTML += `<div class="historial-item">Zócalo: ${data.zocalo.substring(0,20)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
         });
 
-        function borrar(cat, i) {
-            db.once('value', s => {
+        // Función para borrar
+        window.borrar = function(cat, i) {
+            db.once('value').then(s => {
                 let data = s.val();
                 if(cat === 'zocalo') data.zocalo = "";
                 else data[cat].splice(i, 1);
                 db.set(data);
             });
-        }
+        };
     </script>
 </body>
 </html>
+
 
