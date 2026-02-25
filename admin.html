@@ -2,28 +2,42 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel de Control - Cartelera</title>
+    <title>Panel de Control - Cartelera Nube Pro</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        input, select, textarea { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
-        button { background: #2e314f; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; }
-        button:hover { background: #454a75; }
+        body { font-family: 'Inter', sans-serif; padding: 20px; background: #f4f4f9; color: #333; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 600px; margin: 0 auto 20px; }
+        select, textarea, input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        button { width: 100%; background: #2e314f; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .item-historial { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; }
-        .btn-borrar { background: #d9534f; }
+        .btn-borrar { background: #d9534f; width: auto; padding: 5px 10px; }
     </style>
 </head>
 <body>
 
     <div class="card">
-        <h2>Nuevo Anuncio / Foto</h2>
-        <select id="tipo">
+        <h2>Añadir Contenido</h2>
+        <select id="tipo" onchange="alternarCampos()">
             <option value="central">Mensaje Central (Escalera)</option>
-            <option value="zocalo">Zócalo (Marquesina inferior)</option>
-            <option value="foto">URL de Foto (JPG/PNG)</option>
+            <option value="zocalo">Zócalo (Marquesina)</option>
+            <option value="foto">📷 Subir Imagen desde PC</option>
+            <option value="evento">⏰ Mensaje Programado (Bloqueo de Pantalla)</option>
         </select>
-        <textarea id="contenido" placeholder="Escribe el texto o pega la URL de la imagen aquí..."></textarea>
+        
+        <select id="formato" style="display:none;">
+            <option value="normal">Tamaño Normal (Dividido)</option>
+            <option value="completa">Pantalla Completa (Destacado)</option>
+        </select>
+
+        <div id="seccion-evento" style="display:none;">
+            <label>Desde:</label> <input type="time" id="h-inicio">
+            <label>Hasta:</label> <input type="time" id="h-fin">
+        </div>
+
+        <textarea id="contenido" placeholder="Escribe el mensaje aquí..."></textarea>
+        <input type="file" id="filePicker" style="display:none;" accept="image/*">
+        
         <button onclick="agregarItem()">Sumar a la Cartelera</button>
+        <p id="status" style="text-align:center; color: green;"></p>
     </div>
 
     <div class="card">
@@ -33,9 +47,9 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
 
     <script>
-        // Configuración de tu Firebase
         const firebaseConfig = {
             apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
             authDomain: "cartelera-nube.firebaseapp.com",
@@ -47,44 +61,61 @@
         };
         firebase.initializeApp(firebaseConfig);
         const dbRemota = firebase.database();
+        const storage = firebase.storage();
 
-        // Base de datos local (IndexedDB) para gestionar el historial en este navegador
-        let db;
-        const request = indexedDB.open("CarteleraDB", 1);
-        request.onupgradeneeded = (e) => {
-            db = e.target.result;
-            db.createObjectStore("items", { keyPath: "id", autoIncrement: true });
-        };
-        request.onsuccess = (e) => {
-            db = e.target.result;
-            renderHistorial();
-        };
-
-        function agregarItem() {
+        function alternarCampos() {
             const tipo = document.getElementById('tipo').value;
-            const contenido = document.getElementById('contenido').value;
-            if(!contenido) return;
+            document.getElementById('formato').style.display = (tipo === 'foto') ? 'block' : 'none';
+            document.getElementById('filePicker').style.display = (tipo === 'foto') ? 'block' : 'none';
+            document.getElementById('contenido').style.display = (tipo === 'foto') ? 'none' : 'block';
+            document.getElementById('seccion-evento').style.display = (tipo === 'evento') ? 'block' : 'none';
+        }
 
-            const tx = db.transaction("items", "readwrite");
-            tx.objectStore("items").add({ tipo, contenido });
+        async function agregarItem() {
+            const tipo = document.getElementById('tipo').value;
+            let contenido = document.getElementById('contenido').value;
+            let meta = { formato: document.getElementById('formato').value };
+
+            if (tipo === 'foto') {
+                const file = document.getElementById('filePicker').files[0];
+                if (!file) return alert("Selecciona una imagen");
+                const ref = storage.ref().child('fotos/' + Date.now() + "_" + file.name);
+                await ref.put(file);
+                contenido = await ref.getDownloadURL();
+            } else if (tipo === 'evento') {
+                meta.inicio = document.getElementById('h-inicio').value;
+                meta.fin = document.getElementById('h-fin').value;
+                if(!meta.inicio || !meta.fin) return alert("Pon el horario");
+            }
+
+            const tx = dbLocal.transaction("items", "readwrite");
+            tx.objectStore("items").add({ tipo, contenido, meta });
             tx.oncomplete = () => {
-                document.getElementById('contenido').value = '';
+                document.getElementById('status').innerText = "¡Cargado!";
+                setTimeout(() => document.getElementById('status').innerText = "", 2000);
                 actualizarCarteleraTotal();
             };
         }
 
+        // --- Lógica de IndexedDB y renderizado (igual que antes) ---
+        let dbLocal;
+        const request = indexedDB.open("CarteleraDB", 1);
+        request.onupgradeneeded = (e) => {
+            dbLocal = e.target.result;
+            dbLocal.createObjectStore("items", { keyPath: "id", autoIncrement: true });
+        };
+        request.onsuccess = (e) => { dbLocal = e.target.result; renderHistorial(); };
+
         function actualizarCarteleraTotal() {
-            const tx = db.transaction("items", "readonly");
-            const store = tx.objectStore("items");
-            store.getAll().onsuccess = (e) => {
+            const tx = dbLocal.transaction("items", "readonly");
+            tx.objectStore("items").getAll().onsuccess = (e) => {
                 const todos = e.target.result;
                 const dataFinal = {
-                    texto: todos.filter(i => i.tipo === 'central').map(i => i.contenido).join('\n'),
-                    zocalo: todos.filter(i => i.tipo === 'zocalo').map(i => i.contenido).join('  ———  '),
-                    fotos: todos.filter(i => i.tipo === 'foto').map(i => i.contenido)
+                    texto: todos.filter(i => i.tipo === 'central').map(i => i.contenido),
+                    zocalo: todos.filter(i => i.tipo === 'zocalo').map(i => i.contenido).join(' — '),
+                    fotos: todos.filter(i => i.tipo === 'foto').map(i => ({url: i.contenido, formato: i.meta.formato})),
+                    eventos: todos.filter(i => i.tipo === 'evento').map(i => ({msg: i.contenido, inicio: i.meta.inicio, fin: i.meta.fin}))
                 };
-                
-                // ENVIAR A LA NUBE
                 dbRemota.ref('carteleraData').set(dataFinal);
                 renderHistorial();
             };
@@ -93,16 +124,13 @@
         function renderHistorial() {
             const lista = document.getElementById('lista-items');
             lista.innerHTML = '';
-            const tx = db.transaction("items", "readonly");
-            tx.objectStore("items").openCursor().onsuccess = (e) => {
+            dbLocal.transaction("items", "readonly").objectStore("items").openCursor().onsuccess = (e) => {
                 const cursor = e.target.result;
                 if (cursor) {
                     const div = document.createElement('div');
                     div.className = 'item-historial';
-                    div.innerHTML = `
-                        <span><strong>[${cursor.value.tipo.toUpperCase()}]</strong> ${cursor.value.contenido.substring(0, 50)}...</span>
-                        <button class="btn-borrar" onclick="eliminarItem(${cursor.value.id})">Borrar</button>
-                    `;
+                    div.innerHTML = `<span><b>${cursor.value.tipo}</b>: ${cursor.value.contenido.substring(0,20)}</span>
+                                     <button class="btn-borrar" onclick="eliminarItem(${cursor.value.id})">X</button>`;
                     lista.appendChild(div);
                     cursor.continue();
                 }
@@ -110,9 +138,7 @@
         }
 
         function eliminarItem(id) {
-            const tx = db.transaction("items", "readwrite");
-            tx.objectStore("items").delete(id);
-            tx.oncomplete = () => actualizarCarteleraTotal();
+            dbLocal.transaction("items", "readwrite").objectStore("items").delete(id).onsuccess = () => actualizarCarteleraTotal();
         }
     </script>
 </body>

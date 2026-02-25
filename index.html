@@ -8,16 +8,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap" rel="stylesheet">
 </head>
 <body>
-   <header>
-    <div class="logo-container">
-        <img src="logo.png.png" alt="logo" id="logo-institucional">
-    </div>
-    <div class="fechas-container">
-        <div id="fecha-greg"></div>
-        <div id="fecha-heb"></div>
-    </div>
-    <div id="reloj">00:00</div>
-</header>
+    <header>
+        <div class="logo-container"><img src="logo.png.png" alt="logo" id="logo-institucional"></div>
+        <div class="fechas-container">
+            <div id="fecha-greg"></div>
+            <div id="fecha-heb"></div>
+        </div>
+        <div id="reloj">00:00</div>
+    </header>
+
     <main class="contenedor-dividido">
         <section class="col-texto">
             <div id="escalera-mensajes"></div>
@@ -31,6 +30,7 @@
     </main>
 
     <footer class="noticiero">
+        <div class="tag-noticia">AVISOS</div>
         <div class="marquee">
             <span id="texto-zocalo">Cargando avisos desde la nube...</span>
         </div>
@@ -41,7 +41,7 @@
 
     <script src="script.js"></script>
 </body>
-
+<div id="overlay-evento" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#2e314f; color:white; z-index:9999; justify-content:center; align-items:center; font-size:5rem; text-align:center; padding:50px; font-weight:900;">
+    MENSAJE PROGRAMADO
+</div>
 </html>
-
-
