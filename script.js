@@ -8,7 +8,7 @@ const firebaseConfig = {
     appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
 };
 
-// Inicializar Firebase si no está inicializado
+// Inicializar Firebase
 if (!firebase.apps.length) { 
     firebase.initializeApp(firebaseConfig); 
 }
@@ -16,27 +16,24 @@ const dbRemota = firebase.database();
 
 let dataActual = { texto: [], fotos: [], zocalo: "", eventos: [] };
 let idxFoto = 0;
+let idxMensaje = 0; // Índice para la rotación de textos
 
 // --- FUNCIÓN RELOJ Y FECHAS ---
 function actualizarReloj() {
     const ahora = new Date();
     
-    // Reloj HH:MM
     const r = document.getElementById('reloj');
     if (r) r.innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
     
-    // Fecha Gregoriana (Lunes 25 de Febrero...)
     const f = document.getElementById('fecha-greg');
     if (f) f.innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
     
-    // Fecha Hebrea automática
     const fh = document.getElementById('fecha-heb');
     if (fh) {
         const heb = new Intl.DateTimeFormat('es-AR-u-ca-hebrew', {day: 'numeric', month: 'long', year: 'numeric'}).format(ahora);
         fh.innerText = heb;
     }
     
-    // Ejecutar validación de mensajes programados
     verificarEventos();
 }
 
@@ -50,10 +47,11 @@ dbRemota.ref('carteleraData').on('value', (snapshot) => {
         const z = document.getElementById('texto-zocalo');
         if (z) z.innerText = (dataActual.zocalo || "");
         
-        // Actualizar Mensajes en Escalera
+        // Actualizar Mensajes en Escalera (Reinicia la lista)
         const c = document.getElementById('escalera-mensajes');
         if (c) {
             c.innerHTML = '';
+            idxMensaje = 0; // Reiniciamos el índice al recibir datos nuevos
             (dataActual.texto || []).forEach((t, i) => {
                 const div = document.createElement('div');
                 div.className = 'mensaje-item' + (i === 0 ? ' enfocado' : '');
@@ -63,6 +61,17 @@ dbRemota.ref('carteleraData').on('value', (snapshot) => {
         }
     }
 });
+
+// --- ROTACIÓN DE MENSAJES CENTRALES ---
+function rotarMensajes() {
+    const mensajes = document.querySelectorAll('.mensaje-item');
+    if (mensajes.length <= 1) return; // No rotar si hay 0 o 1 mensaje
+
+    mensajes.forEach(m => m.classList.remove('enfocado'));
+    
+    idxMensaje = (idxMensaje + 1) % mensajes.length;
+    mensajes[idxMensaje].classList.add('enfocado');
+}
 
 // --- ROTACIÓN DE FOTOS ---
 function rotarFoto() {
@@ -79,7 +88,6 @@ function rotarFoto() {
         img.style.display = 'block';
     }
     
-    // Manejo de pantalla completa
     if (foto.formato === 'completa') {
         if (colT) colT.style.display = 'none';
         if (colF) colF.style.width = '100%';
@@ -92,28 +100,16 @@ function rotarFoto() {
 // --- VALIDACIÓN DE MENSAJES PROGRAMADOS (BLOQUEO) ---
 function verificarEventos() {
     const ahora = new Date();
-    
-    // 1. Hora actual (HH:MM)
     const hActual = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-    
-    // 2. Día de la semana (0-6)
     const diaHoy = ahora.getDay();
-    
-    // 3. Fecha actual (YYYY-MM-DD) - Ajustada a zona horaria local
     const offset = ahora.getTimezoneOffset() * 60000;
     const fechaHoy = (new Date(ahora - offset)).toISOString().split('T')[0];
 
     const eventoActivo = (dataActual.eventos || []).find(e => {
-        // Validación de Rango de FECHAS (Calendario)
         const cumpleFechaInicio = !e.fechaInicio || fechaHoy >= e.fechaInicio;
         const cumpleFechaFin = !e.fechaFin || fechaHoy <= e.fechaFin;
-        
-        // Validación de DÍA de la semana
         const coincideDia = e.dias ? e.dias.includes(diaHoy) : true;
-        
-        // Validación de HORA
         const coincideHora = (hActual >= e.inicio && hActual <= e.fin);
-
         return cumpleFechaInicio && cumpleFechaFin && coincideDia && coincideHora;
     });
 
@@ -129,11 +125,10 @@ function verificarEventos() {
 }
 
 // --- INTERVALOS ---
-setInterval(actualizarReloj, 1000); // Cada segundo para el reloj
-setInterval(rotarFoto, 8000);       // Cada 8 segundos cambian las fotos
+setInterval(actualizarReloj, 1000); 
+setInterval(rotarFoto, 8000);       
+setInterval(rotarMensajes, 6000); // Nueva rotación de mensajes cada 6 segundos
 
 // Carga inicial
 actualizarReloj();
-
-
 
