@@ -59,13 +59,18 @@ dbRemota.ref('carteleraData').on('value', (snapshot) => {
 
 function rotarFoto() {
     if (!dataActual.fotos || dataActual.fotos.length === 0) return;
+    
     idxFoto = (idxFoto + 1) % dataActual.fotos.length;
     const foto = dataActual.fotos[idxFoto];
     const img = document.getElementById('foto-principal');
     const colT = document.querySelector('.col-texto');
     const colF = document.querySelector('.col-fotos');
 
-    if (img) img.src = foto.url;
+    if (img) {
+        img.src = foto.url;
+        img.style.display = 'block';
+    }
+    
     if (foto.formato === 'completa') {
         if (colT) colT.style.display = 'none';
         if (colF) colF.style.width = '100%';
@@ -93,6 +98,7 @@ function verificarEventos() {
 setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 8000);
 actualizarReloj();
+
 
 
 
