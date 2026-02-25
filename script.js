@@ -8,35 +8,42 @@ const firebaseConfig = {
     appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
 };
 
-// Inicializar Firebase
-if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
 const dbRemota = firebase.database();
 
 let dataActual = { texto: [], fotos: [], zocalo: "", eventos: [] };
 let idxFoto = 0;
 
-// Reloj (Esto DEBE funcionar primero)
 function actualizarReloj() {
     const ahora = new Date();
+    
+    // Reloj
     const r = document.getElementById('reloj');
     if (r) r.innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
     
+    // Fecha Gregoriana
     const f = document.getElementById('fecha-greg');
     if (f) f.innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
+    
+    // Fecha Hebrea
+    const fh = document.getElementById('fecha-heb');
+    if (fh) {
+        const heb = new Intl.DateTimeFormat('es-AR-u-ca-hebrew', {day: 'numeric', month: 'long', year: 'numeric'}).format(ahora);
+        fh.innerText = heb;
+    }
     
     verificarEventos();
 }
 
-// Escuchar cambios
 dbRemota.ref('carteleraData').on('value', (snapshot) => {
     const val = snapshot.val();
     if (val) {
         dataActual = val;
+        // Zócalo (sin guiones)
         const z = document.getElementById('texto-zocalo');
-        if (z) z.innerText = (dataActual.zocalo || "") + " ——— ";
+        if (z) z.innerText = (dataActual.zocalo || "");
         
+        // Mensajes
         const c = document.getElementById('escalera-mensajes');
         if (c) {
             c.innerHTML = '';
@@ -58,11 +65,7 @@ function rotarFoto() {
     const colT = document.querySelector('.col-texto');
     const colF = document.querySelector('.col-fotos');
 
-    if (img) {
-        img.src = foto.url;
-        img.style.display = 'block';
-    }
-    
+    if (img) img.src = foto.url;
     if (foto.formato === 'completa') {
         if (colT) colT.style.display = 'none';
         if (colF) colF.style.width = '100%';
@@ -75,18 +78,12 @@ function rotarFoto() {
 function verificarEventos() {
     const ahora = new Date();
     const h = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-    
-    // Buscamos si hay un evento para el minuto actual
     const evento = (dataActual.eventos || []).find(e => h >= e.inicio && h <= e.fin);
     const overlay = document.getElementById('overlay-evento');
-    
     if (overlay) {
         if (evento) {
             overlay.innerText = evento.msg;
             overlay.style.display = 'flex';
-            // Opcional: Podés agregar un borde dorado arriba y abajo para que destaque
-            overlay.style.borderTop = "4px solid #d4af37";
-            overlay.style.borderBottom = "4px solid #d4af37";
         } else {
             overlay.style.display = 'none';
         }
@@ -96,5 +93,6 @@ function verificarEventos() {
 setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 8000);
 actualizarReloj();
+
 
 
