@@ -10,17 +10,22 @@
         label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
         input, select, button, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
         .sedes-container { background: #fdf2d5; border: 1px solid #d4af37; padding: 15px; border-radius: 8px; display: flex; justify-content: space-around; margin-bottom: 15px; }
-        .sede-option { cursor: pointer; font-size: 0.9rem; }
+        .sede-option { cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        .sede-option input { width: auto; margin: 0; }
         button { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; padding: 15px; }
         button:hover { background: #d4af37; color: #2e314f; }
-        .historial-item { background: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 4px solid #2e314f; display: flex; justify-content: space-between; align-items: center; }
-        .btn-borrar { width: auto; background: #e74c3c; padding: 5px 10px; margin: 0; font-size: 0.8rem; }
+        #horarios { background: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #2e314f; }
+        .dias-selector { display: flex; justify-content: space-between; margin-top: 10px; }
+        .dias-selector label { font-size: 0.7rem; text-align: center; }
+        .dias-selector input { width: auto; display: block; margin: 0 auto; }
+        .historial-item { background: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 4px solid #2e314f; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
+        .btn-borrar { width: auto; background: #e74c3c; padding: 5px 10px; margin: 0; }
     </style>
 </head>
 <body>
 
 <div class="panel">
-    <h2>Panel de Control</h2>
+    <h2>🚀 Panel de Control Central</h2>
     
     <label>🏢 DESTINOS:</label>
     <div class="sedes-container">
@@ -29,19 +34,41 @@
         <label class="sede-option"><input type="checkbox" class="sede-check" value="secundaria"> Secundaria</label>
     </div>
 
-    <label>Tipo:</label>
+    <label>¿Qué vas a publicar?</label>
     <select id="tipo">
-        <option value="texto">Mensaje Central</option>
-        <option value="foto">Foto (Normal)</option>
+        <option value="texto">Mensaje Central (Rotativo)</option>
+        <option value="foto">Foto (Lateral)</option>
         <option value="foto-completa">Foto (Pantalla Completa)</option>
-        <option value="zocalo">Zócalo</option>
+        <option value="zocalo">Noticia Zócalo (Abajo)</option>
+        <option value="evento">⚠️ MENSAJE IMPORTANTE (Bloquea Pantalla)</option>
     </select>
 
-    <textarea id="contenido" placeholder="Escribe aquí..." rows="3"></textarea>
+    <textarea id="contenido" placeholder="Escribe el mensaje o pega el link de la foto..." rows="3"></textarea>
 
-    <button id="btnSubir">PUBLICAR</button>
+    <div id="horarios" style="display:none;">
+        <label>Programación del Bloqueo:</label>
+        <div style="display: flex; gap: 10px;">
+            <input type="date" id="fecha-inicio" title="Fecha Inicio">
+            <input type="date" id="fecha-fin" title="Fecha Fin">
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <input type="time" id="inicio" value="08:00"> 
+            <input type="time" id="fin" value="16:00">
+        </div>
+        <div class="dias-selector">
+            <label><input type="checkbox" class="dia-check" value="1" checked> L</label>
+            <label><input type="checkbox" class="dia-check" value="2" checked> M</label>
+            <label><input type="checkbox" class="dia-check" value="3" checked> M</label>
+            <label><input type="checkbox" class="dia-check" value="4" checked> J</label>
+            <label><input type="checkbox" class="dia-check" value="5" checked> V</label>
+            <label><input type="checkbox" class="dia-check" value="6"> S</label>
+            <label><input type="checkbox" class="dia-check" value="0"> D</label>
+        </div>
+    </div>
 
-    <div style="margin-top:20px; border-top:1px solid #ccc; padding-top:20px;">
+    <button id="btnSubir">PUBLICAR AHORA</button>
+
+    <div style="margin-top:25px; border-top:2px solid #eee; padding-top:20px;">
         <label>Ver Historial de:</label>
         <select id="ver-historial-sede" onchange="cargarHistorial()">
             <option value="primaria">Primaria</option>
@@ -68,26 +95,43 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    document.getElementById('tipo').onchange = function() {
+        document.getElementById('horarios').style.display = (this.value === 'evento') ? 'block' : 'none';
+    };
+
     document.getElementById('btnSubir').onclick = function() {
         const sedes = Array.from(document.querySelectorAll('.sede-check:checked')).map(cb => cb.value);
-        if (sedes.length === 0) return alert("Selecciona sede");
-
+        if (sedes.length === 0) return alert("Selecciona al menos un edificio");
+        
         const tipo = document.getElementById('tipo').value;
         const cont = document.getElementById('contenido').value;
+        if(!cont && tipo !== 'zocalo') return alert("Escribe el contenido");
 
         sedes.forEach(sede => {
             const refSede = db.ref('cartelera/' + sede);
             refSede.once('value').then(snap => {
-                let data = snap.val() || { texto: [], fotos: [], zocalo: "" };
+                let data = snap.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
+                if(!data.eventos) data.eventos = [];
+
                 if (tipo === 'texto') { if(!data.texto) data.texto=[]; data.texto.push(cont); }
                 else if (tipo === 'foto') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'normal'}); }
                 else if (tipo === 'foto-completa') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'completa'}); }
                 else if (tipo === 'zocalo') data.zocalo = cont;
-                
+                else if (tipo === 'evento') {
+                    const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
+                    data.eventos.push({
+                        msg: cont,
+                        inicio: document.getElementById('inicio').value,
+                        fin: document.getElementById('fin').value,
+                        dias: dias,
+                        fechaInicio: document.getElementById('fecha-inicio').value || null,
+                        fechaFin: document.getElementById('fecha-fin').value || null
+                    });
+                }
                 return refSede.set(data);
             });
         });
-        alert("Publicado");
+        alert("¡Publicado!");
         document.getElementById('contenido').value = "";
     };
 
@@ -97,12 +141,14 @@
             const h = document.getElementById('historial');
             const data = snap.val();
             h.innerHTML = "";
-            if(!data) { h.innerHTML = "Vacío"; return; }
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">${t.substring(0,20)} <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
-            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">Foto ${i+1} <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
-            if(data.zocalo) h.innerHTML += `<div class="historial-item">Zocalo <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
+            if(!data) { h.innerHTML = "Sin datos."; return; }
+            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">📝 ${t.substring(0,25)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
+            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">🖼️ Foto ${i+1} <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
+            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">⚠️ IMPORTANTE: ${e.msg.substring(0,15)}... <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
+            if(data.zocalo) h.innerHTML += `<div class="historial-item">🎞️ Zócalo <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
         });
     }
+
     window.borrar = function(cat, i) {
         const sede = document.getElementById('ver-historial-sede').value;
         const ref = db.ref('cartelera/' + sede);
