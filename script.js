@@ -15,6 +15,12 @@ const urlParams = new URLSearchParams(window.location.search);
 const sedeActual = urlParams.get('sede') || 'primaria';
 const dbRemota = db.ref('cartelera/' + sedeActual);
 
+// --- LÓGICA DE LOGOS PARA KHEILA-GAN ---
+if (sedeActual === 'kheila-gan') {
+    const logo2 = document.getElementById('logo-secundario');
+    if (logo2) logo2.style.display = 'inline-block';
+}
+
 let dataActual = { texto: [], fotos: [], zocalo: "", eventos: [] };
 let idxFoto = 0;
 let idxMensaje = 0;
@@ -105,3 +111,4 @@ setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 8000);
 setInterval(rotarMensajes, 6000);
 actualizarReloj();
+
