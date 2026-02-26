@@ -8,26 +8,38 @@ const firebaseConfig = {
     appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
 };
 
-// Inicializar Firebase
+// 1. INICIALIZAR FIREBASE
 if (!firebase.apps.length) { 
     firebase.initializeApp(firebaseConfig); 
 }
-const dbRemota = firebase.database();
+const db = firebase.database();
+
+// 2. DETECTAR SEDE DESDE LA URL (MAGIA PARA MULTI-EDIFICIO)
+// Si la URL es: index.html?sede=secundaria -> sedeActual será 'secundaria'
+// Si no hay nada en la URL, por defecto cargará 'primaria'
+const urlParams = new URLSearchParams(window.location.search);
+const sedeActual = urlParams.get('sede') || 'primaria';
+
+// Referencia a la rama específica del edificio en Firebase
+const dbRemota = db.ref('cartelera/' + sedeActual);
 
 let dataActual = { texto: [], fotos: [], zocalo: "", eventos: [] };
 let idxFoto = 0;
-let idxMensaje = 0; // Índice para la rotación de textos
+let idxMensaje = 0;
 
 // --- FUNCIÓN RELOJ Y FECHAS ---
 function actualizarReloj() {
     const ahora = new Date();
     
+    // Reloj HH:MM
     const r = document.getElementById('reloj');
     if (r) r.innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
     
+    // Fecha Gregoriana
     const f = document.getElementById('fecha-greg');
     if (f) f.innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
     
+    // Fecha Hebrea
     const fh = document.getElementById('fecha-heb');
     if (fh) {
         const heb = new Intl.DateTimeFormat('es-AR-u-ca-hebrew', {day: 'numeric', month: 'long', year: 'numeric'}).format(ahora);
@@ -37,21 +49,21 @@ function actualizarReloj() {
     verificarEventos();
 }
 
-// --- ESCUCHAR CAMBIOS EN FIREBASE ---
-dbRemota.ref('carteleraData').on('value', (snapshot) => {
+// --- ESCUCHAR CAMBIOS EN FIREBASE (SOLO DE MI SEDE) ---
+dbRemota.on('value', (snapshot) => {
     const val = snapshot.val();
     if (val) {
         dataActual = val;
         
-        // Actualizar Zócalo
+        // Zócalo
         const z = document.getElementById('texto-zocalo');
         if (z) z.innerText = (dataActual.zocalo || "");
         
-        // Actualizar Mensajes en Escalera (Reinicia la lista)
+        // Mensajes Centrales
         const c = document.getElementById('escalera-mensajes');
         if (c) {
             c.innerHTML = '';
-            idxMensaje = 0; // Reiniciamos el índice al recibir datos nuevos
+            idxMensaje = 0;
             (dataActual.texto || []).forEach((t, i) => {
                 const div = document.createElement('div');
                 div.className = 'mensaje-item' + (i === 0 ? ' enfocado' : '');
@@ -62,13 +74,12 @@ dbRemota.ref('carteleraData').on('value', (snapshot) => {
     }
 });
 
-// --- ROTACIÓN DE MENSAJES CENTRALES ---
+// --- ROTACIÓN DE MENSAJES ---
 function rotarMensajes() {
     const mensajes = document.querySelectorAll('.mensaje-item');
-    if (mensajes.length <= 1) return; // No rotar si hay 0 o 1 mensaje
+    if (mensajes.length <= 1) return;
 
     mensajes.forEach(m => m.classList.remove('enfocado'));
-    
     idxMensaje = (idxMensaje + 1) % mensajes.length;
     mensajes[idxMensaje].classList.add('enfocado');
 }
@@ -97,7 +108,7 @@ function rotarFoto() {
     }
 }
 
-// --- VALIDACIÓN DE MENSAJES PROGRAMADOS (BLOQUEO) ---
+// --- VALIDACIÓN DE EVENTOS (BLOQUEO) ---
 function verificarEventos() {
     const ahora = new Date();
     const hActual = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
@@ -127,8 +138,11 @@ function verificarEventos() {
 // --- INTERVALOS ---
 setInterval(actualizarReloj, 1000); 
 setInterval(rotarFoto, 8000);       
-setInterval(rotarMensajes, 6000); // Nueva rotación de mensajes cada 6 segundos
+setInterval(rotarMensajes, 6000); 
+
+actualizarReloj();
 
 // Carga inicial
 actualizarReloj();
+
 
