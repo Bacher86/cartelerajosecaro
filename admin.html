@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Admin - Cartelera</title>
+    <title>Panel Central - 3 Edificios</title>
     <style>
         body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
         .panel { background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
@@ -11,16 +11,25 @@
         button:hover { background: #3d4168; }
         .historial-item { background: #eee; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; border-radius: 4px; }
         .btn-borrar { width: auto; background: #e74c3c; margin: 0; padding: 5px 10px; font-size: 0.8rem; }
-        /* Estilo para los checks de días */
         .dias-selector { display: flex; justify-content: space-between; background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
-        .dias-selector label { font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+        .dias-selector label { font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; }
         .dias-selector input { width: auto; margin-bottom: 5px; }
+        .selector-sede { background: #fdf2d5; border: 2px solid #d4af37; font-weight: bold; }
     </style>
 </head>
 <body>
     <div class="panel">
-        <h2>Panel de Control</h2>
+        <h2>Panel de Control Central</h2>
         
+        <label>🏢 **SELECCIONAR EDIFICIO DESTINO:**</label>
+        <select id="sede-destino" class="selector-sede">
+            <option value="primaria">Edificio Primaria</option>
+            <option value="kheila-gan">Edificio Kheila / Gan</option>
+            <option value="secundaria">Edificio Secundaria</option>
+        </select>
+
+        <hr>
+
         <label>Tipo de Contenido:</label>
         <select id="tipo">
             <option value="texto">Mensaje Central</option>
@@ -31,44 +40,33 @@
         </select>
 
         <div id="campos-extra">
-            <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto (URL)" rows="4"></textarea>
+            <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto" rows="4"></textarea>
             
             <div id="horarios" style="display:none; background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ddd;">
-    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Vigencia (Opcional):</label>
-    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-        <div style="flex:1;">
-            <label>Desde:</label> <input type="date" id="fecha-inicio">
-        </div>
-        <div style="flex:1;">
-            <label>Hasta:</label> <input type="date" id="fecha-fin">
-        </div>
-    </div>
-
-    <label style="font-weight: bold; display: block; margin-bottom: 10px;">Repetir los días:</label>
-    <div class="dias-selector">
-        <label><input type="checkbox" class="dia-check" value="1" checked> Lun</label>
-        <label><input type="checkbox" class="dia-check" value="2" checked> Mar</label>
-        <label><input type="checkbox" class="dia-check" value="3" checked> Mié</label>
-        <label><input type="checkbox" class="dia-check" value="4" checked> Jue</label>
-        <label><input type="checkbox" class="dia-check" value="5" checked> Vie</label>
-        <label><input type="checkbox" class="dia-check" value="6"> Sáb</label>
-        <label><input type="checkbox" class="dia-check" value="0"> Dom</label>
-    </div>
-
-    <div style="display: flex; gap: 10px;">
-        <div style="flex:1;">
-            <label>Hora Inicio:</label> <input type="time" id="inicio">
-        </div>
-        <div style="flex:1;">
-            <label>Hora Fin:</label> <input type="time" id="fin">
-        </div>
-    </div>
-</div>
+                <label>Vigencia (Opcional):</label>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="date" id="fecha-inicio">
+                    <input type="date" id="fecha-fin">
+                </div>
+                <label>Días:</label>
+                <div class="dias-selector">
+                    <label><input type="checkbox" class="dia-check" value="1" checked> Lun</label>
+                    <label><input type="checkbox" class="dia-check" value="2" checked> Mar</label>
+                    <label><input type="checkbox" class="dia-check" value="3" checked> Mié</label>
+                    <label><input type="checkbox" class="dia-check" value="4" checked> Jue</label>
+                    <label><input type="checkbox" class="dia-check" value="5" checked> Vie</label>
+                    <label><input type="checkbox" class="dia-check" value="6"> Sáb</label>
+                    <label><input type="checkbox" class="dia-check" value="0"> Dom</label>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <input type="time" id="inicio"> <input type="time" id="fin">
+                </div>
+            </div>
         </div>
 
-        <button id="btnSubir">Sumar a la Cartelera</button>
+        <button id="btnSubir">Cargar en Edificio Seleccionado</button>
 
-        <h3>Historial Actual</h3>
+        <h3>Historial del Edificio</h3>
         <div id="historial">Cargando...</div>
     </div>
 
@@ -87,24 +85,34 @@
         };
         
         if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        const db = firebase.database().ref('carteleraData');
+        
+        // Referencia base
+        const dbBase = firebase.database().ref('cartelera');
+
+        // Función para obtener la rama actual del selector
+        function getRamaActual() {
+            return dbBase.child(document.getElementById('sede-destino').value);
+        }
 
         document.getElementById('tipo').addEventListener('change', function() {
             document.getElementById('horarios').style.display = this.value === 'evento' ? 'block' : 'none';
         });
+
+        // Escuchar cambios en el selector de edificio para actualizar el historial
+        document.getElementById('sede-destino').onchange = cargarHistorial;
 
         document.getElementById('btnSubir').onclick = function() {
             const tipo = document.getElementById('tipo').value;
             const cont = document.getElementById('contenido').value;
             const ini = document.getElementById('inicio').value;
             const fin = document.getElementById('fin').value;
+            const sede = document.getElementById('sede-destino').value;
 
-            if(!cont && tipo !== 'zocalo') {
-                alert("Por favor completa el campo de contenido");
-                return;
-            }
+            if(!cont && tipo !== 'zocalo') return alert("Completa el contenido");
 
-            db.once('value').then(s => {
+            const rama = getRamaActual();
+
+            rama.once('value').then(s => {
                 let data = s.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
                 if(!data.texto) data.texto = [];
                 if(!data.fotos) data.fotos = [];
@@ -115,40 +123,46 @@
                 else if (tipo === 'foto-completa') data.fotos.push({url: cont, formato: 'completa'});
                 else if (tipo === 'zocalo') data.zocalo = cont;
                 else if (tipo === 'evento') {
-                    if(!ini || !fin) return alert("Poné hora de inicio y fin");
                     const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
-                    if(dias.length === 0) return alert("Seleccioná al menos un día");
-                    data.eventos.push({msg: cont, inicio: ini, fin: fin, dias: dias});
+                    data.eventos.push({
+                        msg: cont, inicio: ini, fin: fin, dias: dias,
+                        fechaInicio: document.getElementById('fecha-inicio').value || null,
+                        fechaFin: document.getElementById('fecha-fin').value || null
+                    });
                 }
-                
-                return db.set(data);
+                return rama.set(data);
             }).then(() => {
                 document.getElementById('contenido').value = "";
-                alert("¡Datos guardados con éxito!");
-            }).catch(err => alert("Error: " + err.message));
+                alert("¡Guardado en " + sede.toUpperCase() + "!");
+            });
         };
 
-        db.on('value', s => {
-            const h = document.getElementById('historial');
-            const data = s.val();
-            if(!data) { h.innerHTML = "No hay datos."; return; }
-            h.innerHTML = "";
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">TXT: ${t.substring(0,20)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
-            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">FOTO: ${f.url.substring(0,15)}... <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
-            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">EVT (${e.dias ? e.dias.length : '7'} días): ${e.inicio} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
-            if(data.zocalo) h.innerHTML += `<div class="historial-item">ZOC: ${data.zocalo.substring(0,20)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
-        });
+        function cargarHistorial() {
+            getRamaActual().on('value', s => {
+                const h = document.getElementById('historial');
+                const data = s.val();
+                if(!data) { h.innerHTML = "Sin datos en este edificio."; return; }
+                h.innerHTML = "";
+                if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">TXT: ${t.substring(0,15)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
+                if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">FOTO: ${f.url.substring(0,10)}... <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
+                if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">EVT: ${e.inicio} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
+                if(data.zocalo) h.innerHTML += `<div class="historial-item">ZOC: ${data.zocalo.substring(0,15)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
+            });
+        }
 
         window.borrar = function(cat, i) {
-            db.once('value').then(s => {
+            getRamaActual().once('value').then(s => {
                 let data = s.val();
                 if(cat === 'zocalo') data.zocalo = "";
                 else data[cat].splice(i, 1);
-                db.set(data);
+                getRamaActual().set(data);
             });
         };
+
+        cargarHistorial();
     </script>
 </body>
 </html>
+
 
 
