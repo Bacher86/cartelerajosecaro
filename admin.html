@@ -2,168 +2,117 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Central - 3 Edificios</title>
+    <title>Panel Central Multisede</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-        .panel { background: white; padding: 20px; border-radius: 10px; max-width: 600px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        input, select, button, textarea { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-        button { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; padding: 15px; border-radius: 5px; }
-        button:hover { background: #3d4168; }
-        .historial-item { background: #eee; padding: 10px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; border-radius: 4px; }
-        .btn-borrar { width: auto; background: #e74c3c; margin: 0; padding: 5px 10px; font-size: 0.8rem; }
-        .dias-selector { display: flex; justify-content: space-between; background: #eee; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
-        .dias-selector label { font-size: 0.8rem; display: flex; flex-direction: column; align-items: center; }
-        .dias-selector input { width: auto; margin-bottom: 5px; }
-        .selector-sede { background: #fdf2d5; border: 2px solid #d4af37; font-weight: bold; }
+        body { font-family: sans-serif; padding: 20px; background: #eef2f3; }
+        .panel { background: white; padding: 25px; border-radius: 12px; max-width: 650px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h2 { color: #2e314f; border-bottom: 2px solid #d4af37; padding-bottom: 10px; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
+        input, select, button, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        .sedes-container { background: #fdf2d5; border: 1px solid #d4af37; padding: 15px; border-radius: 8px; display: flex; justify-content: space-around; margin-bottom: 15px; }
+        .sede-option { cursor: pointer; font-size: 0.9rem; }
+        button { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; padding: 15px; }
+        button:hover { background: #d4af37; color: #2e314f; }
+        .historial-item { background: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 4px solid #2e314f; display: flex; justify-content: space-between; align-items: center; }
+        .btn-borrar { width: auto; background: #e74c3c; padding: 5px 10px; margin: 0; font-size: 0.8rem; }
     </style>
 </head>
 <body>
-    <div class="panel">
-        <h2>Panel de Control Central</h2>
-        
-       <label style="font-weight: bold; color: #5d1a1a; display: block; margin-bottom: 10px;">🏢 SELECCIONAR DESTINOS (Podés elegir varios):</label>
-<div style="background: #fdf2d5; border: 2px solid #d4af37; padding: 15px; border-radius: 5px; margin-bottom: 15px;">
-    <label style="display: block; margin-bottom: 5px;"><input type="checkbox" class="sede-check" value="primaria"> Edificio Primaria</label>
-    <label style="display: block; margin-bottom: 5px;"><input type="checkbox" class="sede-check" value="kheila-gan"> Edificio Kheila / Gan</label>
-    <label style="display: block;"><input type="checkbox" class="sede-check" value="secundaria"> Edificio Secundaria</label>
-</div>
 
-        <hr>
-
-        <label>Tipo de Contenido:</label>
-        <select id="tipo">
-            <option value="texto">Mensaje Central</option>
-            <option value="foto">Foto (Normal - Link URL)</option>
-            <option value="foto-completa">Foto (Pantalla Completa - Link URL)</option>
-            <option value="zocalo">Zócalo Inferior</option>
-            <option value="evento">Mensaje Programado (Bloqueo)</option>
-        </select>
-
-        <div id="campos-extra">
-            <textarea id="contenido" placeholder="Escribe el mensaje o pega el LINK de la foto" rows="4"></textarea>
-            
-            <div id="horarios" style="display:none; background: #f9f9f9; padding: 15px; border-radius: 5px; margin-bottom: 15px; border: 1px solid #ddd;">
-                <label>Vigencia (Opcional):</label>
-                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-                    <input type="date" id="fecha-inicio">
-                    <input type="date" id="fecha-fin">
-                </div>
-                <label>Días:</label>
-                <div class="dias-selector">
-                    <label><input type="checkbox" class="dia-check" value="1" checked> Lun</label>
-                    <label><input type="checkbox" class="dia-check" value="2" checked> Mar</label>
-                    <label><input type="checkbox" class="dia-check" value="3" checked> Mié</label>
-                    <label><input type="checkbox" class="dia-check" value="4" checked> Jue</label>
-                    <label><input type="checkbox" class="dia-check" value="5" checked> Vie</label>
-                    <label><input type="checkbox" class="dia-check" value="6"> Sáb</label>
-                    <label><input type="checkbox" class="dia-check" value="0"> Dom</label>
-                </div>
-                <div style="display: flex; gap: 10px;">
-                    <input type="time" id="inicio"> <input type="time" id="fin">
-                </div>
-            </div>
-        </div>
-
-        <button id="btnSubir">Cargar en Edificio Seleccionado</button>
-
-        <h3>Historial del Edificio</h3>
-        <div id="historial">Cargando...</div>
+<div class="panel">
+    <h2>Panel de Control</h2>
+    
+    <label>🏢 DESTINOS:</label>
+    <div class="sedes-container">
+        <label class="sede-option"><input type="checkbox" class="sede-check" value="primaria"> Primaria</label>
+        <label class="sede-option"><input type="checkbox" class="sede-check" value="kheila-gan"> Kheila/Gan</label>
+        <label class="sede-option"><input type="checkbox" class="sede-check" value="secundaria"> Secundaria</label>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <label>Tipo:</label>
+    <select id="tipo">
+        <option value="texto">Mensaje Central</option>
+        <option value="foto">Foto (Normal)</option>
+        <option value="foto-completa">Foto (Pantalla Completa)</option>
+        <option value="zocalo">Zócalo</option>
+    </select>
 
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
-            authDomain: "cartelera-nube.firebaseapp.com",
-            databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
-            projectId: "cartelera-nube",
-            storageBucket: "cartelera-nube.firebasestorage.app",
-            messagingSenderId: "333887658907",
-            appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
-        };
-        
-        if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-        
-        // Referencia base
-        const dbBase = firebase.database().ref('cartelera');
+    <textarea id="contenido" placeholder="Escribe aquí..." rows="3"></textarea>
 
-        // Función para obtener la rama actual del selector
-        function getRamaActual() {
-            return dbBase.child(document.getElementById('sede-destino').value);
-        }
+    <button id="btnSubir">PUBLICAR</button>
 
-        document.getElementById('tipo').addEventListener('change', function() {
-            document.getElementById('horarios').style.display = this.value === 'evento' ? 'block' : 'none';
-        });
+    <div style="margin-top:20px; border-top:1px solid #ccc; padding-top:20px;">
+        <label>Ver Historial de:</label>
+        <select id="ver-historial-sede" onchange="cargarHistorial()">
+            <option value="primaria">Primaria</option>
+            <option value="kheila-gan">Kheila/Gan</option>
+            <option value="secundaria">Secundaria</option>
+        </select>
+        <div id="historial">Cargando...</div>
+    </div>
+</div>
 
-        // Escuchar cambios en el selector de edificio para actualizar el historial
-        document.getElementById('sede-destino').onchange = cargarHistorial;
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-        document.getElementById('btnSubir').onclick = function() {
-            const tipo = document.getElementById('tipo').value;
-            const cont = document.getElementById('contenido').value;
-            const ini = document.getElementById('inicio').value;
-            const fin = document.getElementById('fin').value;
-            const sede = document.getElementById('sede-destino').value;
+<script>
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
+        authDomain: "cartelera-nube.firebaseapp.com",
+        databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
+        projectId: "cartelera-nube",
+        storageBucket: "cartelera-nube.firebasestorage.app",
+        messagingSenderId: "333887658907",
+        appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-            if(!cont && tipo !== 'zocalo') return alert("Completa el contenido");
+    document.getElementById('btnSubir').onclick = function() {
+        const sedes = Array.from(document.querySelectorAll('.sede-check:checked')).map(cb => cb.value);
+        if (sedes.length === 0) return alert("Selecciona sede");
 
-            const rama = getRamaActual();
+        const tipo = document.getElementById('tipo').value;
+        const cont = document.getElementById('contenido').value;
 
-            rama.once('value').then(s => {
-                let data = s.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
-                if(!data.texto) data.texto = [];
-                if(!data.fotos) data.fotos = [];
-                if(!data.eventos) data.eventos = [];
-
-                if (tipo === 'texto') data.texto.push(cont);
-                else if (tipo === 'foto') data.fotos.push({url: cont, formato: 'normal'});
-                else if (tipo === 'foto-completa') data.fotos.push({url: cont, formato: 'completa'});
+        sedes.forEach(sede => {
+            const refSede = db.ref('cartelera/' + sede);
+            refSede.once('value').then(snap => {
+                let data = snap.val() || { texto: [], fotos: [], zocalo: "" };
+                if (tipo === 'texto') { if(!data.texto) data.texto=[]; data.texto.push(cont); }
+                else if (tipo === 'foto') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'normal'}); }
+                else if (tipo === 'foto-completa') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'completa'}); }
                 else if (tipo === 'zocalo') data.zocalo = cont;
-                else if (tipo === 'evento') {
-                    const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
-                    data.eventos.push({
-                        msg: cont, inicio: ini, fin: fin, dias: dias,
-                        fechaInicio: document.getElementById('fecha-inicio').value || null,
-                        fechaFin: document.getElementById('fecha-fin').value || null
-                    });
-                }
-                return rama.set(data);
-            }).then(() => {
-                document.getElementById('contenido').value = "";
-                alert("¡Guardado en " + sede.toUpperCase() + "!");
+                
+                return refSede.set(data);
             });
-        };
+        });
+        alert("Publicado");
+        document.getElementById('contenido').value = "";
+    };
 
-        function cargarHistorial() {
-            getRamaActual().on('value', s => {
-                const h = document.getElementById('historial');
-                const data = s.val();
-                if(!data) { h.innerHTML = "Sin datos en este edificio."; return; }
-                h.innerHTML = "";
-                if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">TXT: ${t.substring(0,15)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
-                if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">FOTO: ${f.url.substring(0,10)}... <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
-                if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">EVT: ${e.inicio} <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
-                if(data.zocalo) h.innerHTML += `<div class="historial-item">ZOC: ${data.zocalo.substring(0,15)}... <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
-            });
-        }
-
-        window.borrar = function(cat, i) {
-            getRamaActual().once('value').then(s => {
-                let data = s.val();
-                if(cat === 'zocalo') data.zocalo = "";
-                else data[cat].splice(i, 1);
-                getRamaActual().set(data);
-            });
-        };
-
-        cargarHistorial();
-    </script>
+    function cargarHistorial() {
+        const sede = document.getElementById('ver-historial-sede').value;
+        db.ref('cartelera/' + sede).on('value', snap => {
+            const h = document.getElementById('historial');
+            const data = snap.val();
+            h.innerHTML = "";
+            if(!data) { h.innerHTML = "Vacío"; return; }
+            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">${t.substring(0,20)} <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
+            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">Foto ${i+1} <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
+            if(data.zocalo) h.innerHTML += `<div class="historial-item">Zocalo <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
+        });
+    }
+    window.borrar = function(cat, i) {
+        const sede = document.getElementById('ver-historial-sede').value;
+        const ref = db.ref('cartelera/' + sede);
+        ref.once('value').then(snap => {
+            let data = snap.val();
+            if(cat === 'zocalo') data.zocalo = ""; else data[cat].splice(i, 1);
+            ref.set(data);
+        });
+    };
+    cargarHistorial();
+</script>
 </body>
 </html>
-
-
-
-
