@@ -18,13 +18,14 @@ header {
 
 /* --- CONTENEDORES BALANCEADOS PARA CENTRADO --- */
 .logo-container { 
-    width: 25%; /* Espacio fijo a la izquierda */
+    width: 30%; /* Le damos un poquito más de aire por si los logos son anchos */
     display: flex; 
     align-items: center; 
     justify-content: flex-start;
+    gap: 15px; /* Esto separa un logo del otro */
 }
 
-#logo-institucional { 
+#logo-institucional, #logo-secundario { 
     max-height: 8vh !important; 
     width: auto; 
     object-fit: contain; 
@@ -96,6 +97,7 @@ footer { height: 8vh; background: #5d1a1a; display: flex; align-items: center; o
     padding: 40px; font-weight: 900; line-height: 1.2;
     border-top: 3px solid #d4af37; border-bottom: 3px solid #d4af37;
 }
+
 
 
 
