@@ -108,7 +108,8 @@ function rotarFoto() {
 }
 
 setInterval(actualizarReloj, 1000);
-setInterval(rotarFoto, 8000);
+setInterval(rotarFoto, 20000);
 setInterval(rotarMensajes, 6000);
 actualizarReloj();
+
 
