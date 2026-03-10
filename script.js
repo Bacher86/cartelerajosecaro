@@ -55,8 +55,10 @@ dbRemota.on('value', snap => {
 
 function verificarEventos() {
     const overlay = document.getElementById('overlay-evento');
+    
+    // Si no hay eventos o la lista está vacía, ocultamos todo y salimos
     if (!dataActual.eventos || dataActual.eventos.length === 0) {
-        overlay.style.display = 'none';
+        if (overlay) overlay.style.display = 'none';
         return;
     }
 
@@ -74,12 +76,13 @@ function verificarEventos() {
     });
 
     if (evento) {
-        // Buscamos el div interno para que el texto aparezca centrado y prolijo
+        // REEMPLAZO CLAVE: Buscamos el div de la placa blanca
         const contenidoEvento = document.getElementById('texto-evento-contenido');
         if (contenidoEvento) {
             contenidoEvento.innerText = evento.msg;
         }
-        overlay.style.display = 'flex';
+        // Mostramos el contenedor principal con Flex para que se centre
+        overlay.style.display = 'flex'; 
     } else {
         overlay.style.display = 'none';
     }
@@ -115,6 +118,7 @@ setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 20000);
 setInterval(rotarMensajes, 6000);
 actualizarReloj();
+
 
 
 
