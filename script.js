@@ -74,7 +74,11 @@ function verificarEventos() {
     });
 
     if (evento) {
-        overlay.innerText = evento.msg;
+        // Buscamos el div interno para que el texto aparezca centrado y prolijo
+        const contenidoEvento = document.getElementById('texto-evento-contenido');
+        if (contenidoEvento) {
+            contenidoEvento.innerText = evento.msg;
+        }
         overlay.style.display = 'flex';
     } else {
         overlay.style.display = 'none';
@@ -111,5 +115,6 @@ setInterval(actualizarReloj, 1000);
 setInterval(rotarFoto, 20000);
 setInterval(rotarMensajes, 6000);
 actualizarReloj();
+
 
 
