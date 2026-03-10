@@ -2,74 +2,82 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Central Multisede</title>
+    <title>Panel Central Escolar - Modo Edición</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #eef2f3; }
-        .panel { background: white; padding: 25px; border-radius: 12px; max-width: 650px; margin: auto; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h2 { color: #2e314f; border-bottom: 2px solid #d4af37; padding-bottom: 10px; }
-        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; }
-        input, select, button, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', sans-serif; padding: 20px; background: #eef2f3; color: #333; }
+        .panel { background: white; padding: 30px; border-radius: 15px; max-width: 700px; margin: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        h2 { color: #2e314f; border-bottom: 3px solid #d4af37; padding-bottom: 10px; margin-top: 0; }
+        label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; color: #2e314f; }
+        input, select, button, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
         .sedes-container { background: #fdf2d5; border: 1px solid #d4af37; padding: 15px; border-radius: 8px; display: flex; justify-content: space-around; margin-bottom: 15px; }
-        .sede-option { cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 5px; }
+        .sede-option { cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; font-weight: bold; }
         .sede-option input { width: auto; margin: 0; }
-        button { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; padding: 15px; }
-        button:hover { background: #d4af37; color: #2e314f; }
-        #horarios { background: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #2e314f; }
+
+        /* Botón dinámico */
+        #btnSubir { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; padding: 15px; }
+        #btnSubir.modo-edit { background: #27ae60; } /* Verde cuando editamos */
+        #btnSubir:hover { opacity: 0.9; }
+
+        #horarios { background: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #2e314f; display: none; }
         .dias-selector { display: flex; justify-content: space-between; margin-top: 10px; }
-        .dias-selector label { font-size: 0.7rem; text-align: center; }
-        .dias-selector input { width: auto; display: block; margin: 0 auto; }
-        .historial-item { background: #f9f9f9; padding: 10px; margin-bottom: 8px; border-radius: 6px; border-left: 4px solid #2e314f; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; }
-        .btn-borrar { width: auto; background: #e74c3c; padding: 5px 10px; margin: 0; }
+        .dias-selector label { font-size: 0.8rem; text-align: center; font-weight: normal; }
+        .dias-selector input { width: auto; display: block; margin: 5px auto 0; }
+
+        .historial-container { margin-top:30px; border-top:2px solid #eee; padding-top:20px; }
+        .historial-item { background: #f9f9f9; padding: 12px; margin-bottom: 10px; border-radius: 8px; border-left: 5px solid #2e314f; display: flex; justify-content: space-between; align-items: center; }
+        .btn-editar { background: #3498db; width: auto; padding: 5px 12px; font-size: 0.8rem; margin: 0; color: white; border: none; border-radius: 4px; cursor: pointer;}
+        .btn-borrar { background: #e74c3c; width: auto; padding: 5px 12px; font-size: 0.8rem; margin: 0; color: white; border: none; border-radius: 4px; cursor: pointer;}
     </style>
 </head>
 <body>
 
 <div class="panel">
-    <h2>🚀 Panel de Control Central</h2>
+    <h2 id="titulo-panel">🚀 Panel de Control Escolar</h2>
     
-    <label>🏢 DESTINOS:</label>
+    <label>🏢 EDIFICIOS DESTINO:</label>
     <div class="sedes-container">
         <label class="sede-option"><input type="checkbox" class="sede-check" value="primaria"> Primaria</label>
         <label class="sede-option"><input type="checkbox" class="sede-check" value="kheila-gan"> Kheila/Gan</label>
         <label class="sede-option"><input type="checkbox" class="sede-check" value="secundaria"> Secundaria</label>
     </div>
 
-    <label>¿Qué vas a publicar?</label>
+    <label>TIPO DE PUBLICACIÓN:</label>
     <select id="tipo">
-        <option value="texto">Mensaje Central (Rotativo)</option>
-        <option value="foto">Foto (Lateral)</option>
-        <option value="foto-completa">Foto (Pantalla Completa)</option>
-        <option value="zocalo">Noticia Zócalo (Abajo)</option>
-        <option value="evento">⚠️ MENSAJE IMPORTANTE (Bloquea Pantalla)</option>
+        <option value="texto">📝 Mensaje Central (Rotativo)</option>
+        <option value="foto">🖼️ Foto (Formato Normal)</option>
+        <option value="foto-completa">📺 Foto (Pantalla Completa)</option>
+        <option value="zocalo">🎞️ Noticia Zócalo (Abajo)</option>
+        <option value="evento">⚠️ MENSAJE IMPORTANTE (Bloqueo)</option>
     </select>
 
-    <textarea id="contenido" placeholder="Escribe el mensaje o pega el link de la foto..." rows="3"></textarea>
+    <textarea id="contenido" placeholder="Escribe el mensaje o pega el link aquí..." rows="4"></textarea>
 
-    <div id="horarios" style="display:none;">
-        <label>Programación del Bloqueo:</label>
+    <div id="horarios">
+        <label>VIGENCIA Y HORARIOS:</label>
         <div style="display: flex; gap: 10px;">
-            <input type="date" id="fecha-inicio" title="Fecha Inicio">
-            <input type="date" id="fecha-fin" title="Fecha Fin">
+            <input type="date" id="fecha-inicio">
+            <input type="date" id="fecha-fin">
         </div>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
             <input type="time" id="inicio" value="08:00"> 
             <input type="time" id="fin" value="16:00">
         </div>
         <div class="dias-selector">
-            <label><input type="checkbox" class="dia-check" value="1" checked> L</label>
-            <label><input type="checkbox" class="dia-check" value="2" checked> M</label>
-            <label><input type="checkbox" class="dia-check" value="3" checked> M</label>
-            <label><input type="checkbox" class="dia-check" value="4" checked> J</label>
-            <label><input type="checkbox" class="dia-check" value="5" checked> V</label>
-            <label><input type="checkbox" class="dia-check" value="6"> S</label>
-            <label><input type="checkbox" class="dia-check" value="0"> D</label>
+            <label>L <input type="checkbox" class="dia-check" value="1" checked></label>
+            <label>M <input type="checkbox" class="dia-check" value="2" checked></label>
+            <label>M <input type="checkbox" class="dia-check" value="3" checked></label>
+            <label>J <input type="checkbox" class="dia-check" value="4" checked></label>
+            <label>V <input type="checkbox" class="dia-check" value="5" checked></label>
+            <label>S <input type="checkbox" class="dia-check" value="6"></label>
+            <label>D <input type="checkbox" class="dia-check" value="0"></label>
         </div>
     </div>
 
-    <button id="btnSubir">PUBLICAR AHORA</button>
+    <button id="btnSubir">🚀 PUBLICAR AHORA</button>
 
-    <div style="margin-top:25px; border-top:2px solid #eee; padding-top:20px;">
-        <label>Ver Historial de:</label>
+    <div class="historial-container">
+        <label>VER Y EDITAR HISTORIAL DE:</label>
         <select id="ver-historial-sede" onchange="cargarHistorial()">
             <option value="primaria">Primaria</option>
             <option value="kheila-gan">Kheila/Gan</option>
@@ -95,44 +103,45 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
+    const btnSubir = document.getElementById('btnSubir');
+
     document.getElementById('tipo').onchange = function() {
         document.getElementById('horarios').style.display = (this.value === 'evento') ? 'block' : 'none';
     };
 
-    document.getElementById('btnSubir').onclick = function() {
+    btnSubir.onclick = function() {
         const sedes = Array.from(document.querySelectorAll('.sede-check:checked')).map(cb => cb.value);
-        if (sedes.length === 0) return alert("Selecciona al menos un edificio");
+        if (sedes.length === 0) return alert("Selecciona al menos una sede.");
         
         const tipo = document.getElementById('tipo').value;
         const cont = document.getElementById('contenido').value;
-        if(!cont && tipo !== 'zocalo') return alert("Escribe el contenido");
 
         sedes.forEach(sede => {
             const refSede = db.ref('cartelera/' + sede);
             refSede.once('value').then(snap => {
                 let data = snap.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
-                if(!data.eventos) data.eventos = [];
-
+                
                 if (tipo === 'texto') { if(!data.texto) data.texto=[]; data.texto.push(cont); }
                 else if (tipo === 'foto') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'normal'}); }
                 else if (tipo === 'foto-completa') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'completa'}); }
                 else if (tipo === 'zocalo') data.zocalo = cont;
                 else if (tipo === 'evento') {
+                    if(!data.eventos) data.eventos = [];
                     const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
                     data.eventos.push({
-                        msg: cont,
-                        inicio: document.getElementById('inicio').value,
-                        fin: document.getElementById('fin').value,
-                        dias: dias,
-                        fechaInicio: document.getElementById('fecha-inicio').value || null,
-                        fechaFin: document.getElementById('fecha-fin').value || null
+                        msg: cont, inicio: document.getElementById('inicio').value, fin: document.getElementById('fin').value,
+                        dias: dias, fechaInicio: document.getElementById('fecha-inicio').value || null, fechaFin: document.getElementById('fecha-fin').value || null
                     });
                 }
                 return refSede.set(data);
             });
         });
-        alert("¡Publicado!");
+        
+        // Reset visual tras publicar
+        btnSubir.innerText = "🚀 PUBLICAR AHORA";
+        btnSubir.classList.remove('modo-edit');
         document.getElementById('contenido').value = "";
+        alert("¡Acción realizada!");
     };
 
     function cargarHistorial() {
@@ -141,11 +150,52 @@
             const h = document.getElementById('historial');
             const data = snap.val();
             h.innerHTML = "";
-            if(!data) { h.innerHTML = "Sin datos."; return; }
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += `<div class="historial-item">📝 ${t.substring(0,25)}... <button class="btn-borrar" onclick="borrar('texto', ${i})">X</button></div>`);
-            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += `<div class="historial-item">🖼️ Foto ${i+1} <button class="btn-borrar" onclick="borrar('fotos', ${i})">X</button></div>`);
-            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += `<div class="historial-item">⚠️ IMPORTANTE: ${e.msg.substring(0,15)}... <button class="btn-borrar" onclick="borrar('eventos', ${i})">X</button></div>`);
-            if(data.zocalo) h.innerHTML += `<div class="historial-item">🎞️ Zócalo <button class="btn-borrar" onclick="borrar('zocalo')">X</button></div>`;
+            if(!data) { h.innerHTML = "Sede vacía."; return; }
+
+            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += itemHTML(`📝 ${t.substring(0,25)}...`, 'texto', i));
+            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += itemHTML(`🖼️ Foto ${i+1}`, 'fotos', i));
+            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += itemHTML(`⚠️ BLOQUEO: ${e.msg.substring(0,15)}...`, 'eventos', i));
+            if(data.zocalo) h.innerHTML += itemHTML(`🎞️ Zócalo Actual`, 'zocalo', 0);
+        });
+    }
+
+    function itemHTML(t, cat, i) {
+        return `<div class="historial-item"><span>${t}</span><div class="acciones">
+            <button class="btn-editar" onclick="editar('${cat}', ${i})">✏️ Editar</button>
+            <button class="btn-borrar" onclick="borrar('${cat}', ${i})">Eliminar</button>
+        </div></div>`;
+    }
+
+    window.editar = function(cat, i) {
+        const sede = document.getElementById('ver-historial-sede').value;
+        db.ref('cartelera/' + sede).once('value').then(snap => {
+            const data = snap.val();
+            const item = (cat === 'zocalo') ? data.zocalo : data[cat][i];
+
+            // Cargar datos
+            document.getElementById('contenido').value = (cat === 'fotos') ? item.url : (cat === 'eventos' ? item.msg : item);
+            const sel = document.getElementById('tipo');
+            if (cat === 'texto') sel.value = 'texto';
+            else if (cat === 'zocalo') sel.value = 'zocalo';
+            else if (cat === 'fotos') sel.value = (item.formato === 'completa' ? 'foto-completa' : 'foto');
+            else if (cat === 'eventos') {
+                sel.value = 'evento';
+                document.getElementById('horarios').style.display = 'block';
+                document.getElementById('inicio').value = item.inicio;
+                document.getElementById('fin').value = item.fin;
+                document.getElementById('fecha-inicio').value = item.fechaInicio || "";
+                document.getElementById('fecha-fin').value = item.fechaFin || "";
+                document.querySelectorAll('.dia-check').forEach(cb => cb.checked = item.dias.includes(parseInt(cb.value)));
+            }
+            
+            document.querySelectorAll('.sede-check').forEach(cb => cb.checked = (cb.value === sede));
+            
+            // Cambio visual de botón
+            btnSubir.innerText = "💾 GUARDAR CAMBIOS";
+            btnSubir.classList.add('modo-edit');
+            
+            borrar(cat, i); // Lo quita del historial para re-subirlo
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
 
@@ -154,7 +204,7 @@
         const ref = db.ref('cartelera/' + sede);
         ref.once('value').then(snap => {
             let data = snap.val();
-            if(cat === 'zocalo') data.zocalo = ""; else data[cat].splice(i, 1);
+            if(cat === 'zocalo') data.zocalo = ""; else if(data[cat]) data[cat].splice(i, 1);
             ref.set(data);
         });
     };
