@@ -16,24 +16,36 @@
     height: 12vh; 
     background: rgba(0,0,0,0.5); 
     display: flex; 
-    flex-direction: column; /* Apila el logo sobre el reloj */
+    justify-content: space-between; /* Distribuye: Izquierda, Centro, Derecha */
     align-items: center; 
-    justify-content: center;
+    padding: 0 40px; 
     border-bottom: 2px solid #d4af37;
-    padding: 10px 0;
+    box-sizing: border-box;
 }
 
 .logo-ajdut { 
-    max-height: 6vh; /* Ajusta el tamaño para que no tape todo */
+    height: 8vh; 
     width: auto; 
-    object-fit: contain;
-    margin-bottom: 5px;
+    object-fit: contain; 
+}
+
+.fechas-container { 
+    text-align: center;
+    flex: 1; /* Esto hace que el contenedor del medio empuje a los otros a los bordes */
+}
+
+#fecha-greg { 
+    font-size: 1.4rem; 
+    color: #d4af37; 
+    font-weight: 700; 
+    text-transform: capitalize; 
 }
 
 #reloj { 
-    font-size: 2.5rem; 
+    font-size: 3.5rem; 
     font-weight: 200; 
-    line-height: 1;
+    text-align: right; 
+    min-width: 150px;
 }
 
     .contenido-vertical {
@@ -81,7 +93,14 @@
 <body>
 
    <header>
-    <img src="LogoAdjut.png" class="logo-ajdut" alt="Logo Ajdut">
+    <div class="logo-container">
+        <img src="LogoAdjut.png" class="logo-ajdut" alt="Logo">
+    </div>
+    
+    <div class="fechas-container">
+        <div id="fecha-greg">Cargando fecha...</div>
+    </div>
+    
     <div id="reloj">00:00</div>
 </header>
 
@@ -101,55 +120,64 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script>
-        // Tu configuración de Firebase
-        const firebaseConfig = {
-            apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
-            authDomain: "cartelera-nube.firebaseapp.com",
-            databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
-            projectId: "cartelera-nube",
-            storageBucket: "cartelera-nube.firebasestorage.app",
-            messagingSenderId: "333887658907",
-            appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const dbRef = db.ref('cartelera/ajdut');
+    // Configuración de Firebase (la misma que ya tenés)
+    const firebaseConfig = {
+        apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
+        authDomain: "cartelera-nube.firebaseapp.com",
+        databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
+        projectId: "cartelera-nube",
+        storageBucket: "cartelera-nube.firebasestorage.app",
+        messagingSenderId: "333887658907",
+        appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
+    };
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const dbRef = db.ref('cartelera/ajdut'); // Esto asegura que solo lea Ajdut
 
-        let data = { fotos: [], texto: [], zocalo: "" };
-        let idxF = 0; let idxT = 0;
+    let data = { fotos: [], texto: [], zocalo: "" };
+    let idxF = 0; 
+    let idxT = 0;
 
-        function actualizarReloj() {
-            const ahora = new Date();
-            document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+    function actualizarReloj() {
+        const ahora = new Date();
+        // Actualiza la hora
+        document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+        
+        // Actualiza la fecha en el medio
+        const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
+        document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', opciones);
+    }
+
+    // Escucha de datos en tiempo real
+    dbRef.on('value', snap => {
+        const val = snap.val();
+        if(val) {
+            data = val;
+            document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
         }
+    });
 
-        dbRef.on('value', snap => {
-            const val = snap.val();
-            if(val) {
-                data = val;
-                document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
-            }
-        });
-
-        function rotar() {
-            if (data.fotos && data.fotos.length > 0) {
-                idxF = (idxF + 1) % data.fotos.length;
-                document.getElementById('foto-principal').src = data.fotos[idxF].url;
-            }
-            if (data.texto && data.texto.length > 0) {
-                const msgEl = document.getElementById('mensaje-texto');
-                msgEl.style.opacity = 0;
-                setTimeout(() => {
-                    idxT = (idxT + 1) % data.texto.length;
-                    msgEl.innerText = data.texto[idxT];
-                    msgEl.style.opacity = 1;
-                }, 800);
-            }
+    function rotar() {
+        // Rotación de Fotos
+        if (data.fotos && data.fotos.length > 0) {
+            idxF = (idxF + 1) % data.fotos.length;
+            document.getElementById('foto-principal').src = data.fotos[idxF].url;
         }
+        // Rotación de Mensajes
+        if (data.texto && data.texto.length > 0) {
+            const msgEl = document.getElementById('mensaje-texto');
+            msgEl.style.opacity = 0;
+            setTimeout(() => {
+                idxT = (idxT + 1) % data.texto.length;
+                msgEl.innerText = data.texto[idxT];
+                msgEl.style.opacity = 1;
+            }, 800);
+        }
+    }
 
-        setInterval(actualizarReloj, 1000);
-        setInterval(rotar, 10000); // Cambia cada 10 segundos para no cansar la tele
-        actualizarReloj();
-    </script>
+    setInterval(actualizarReloj, 1000);
+    setInterval(rotar, 10000); // Cambia cada 10 segundos
+    actualizarReloj();
+</script>
 </body>
 </html>
