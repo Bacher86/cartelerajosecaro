@@ -85,8 +85,9 @@
             <img src="LogoAdjut.png" class="logo-ajdut" alt="Logo">
         </div>
         <div class="fechas-container">
-            <div id="fecha-greg">Cargando fecha...</div>
-        </div>
+    <div id="fecha-greg">Cargando fecha...</div>
+    <div id="fecha-heb" style="font-size: 1.1rem; color: #ffffff; margin-top: 5px;"></div>
+</div>
         <div id="reloj">00:00</div>
     </header>
 
@@ -123,12 +124,25 @@
         let idxF = 0; 
         let idxT = 0;
 
-        function actualizarReloj() {
-            const ahora = new Date();
-            document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-            const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
-            document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', opciones);
-        }
+       function actualizarReloj() {
+    const ahora = new Date();
+    // Hora
+    document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+    
+    // Fecha Gregoriana
+    const opciones = { weekday: 'long', day: 'numeric', month: 'long' };
+    document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', opciones);
+
+    // Fecha Hebrea (Llamada a API)
+    fetch('https://www.hebcal.com/converter?cfg=json&gy=' + ahora.getFullYear() + '&gm=' + (ahora.getMonth() + 1) + '&gd=' + ahora.getDate() + '&g2h=1')
+        .then(response => response.json())
+        .then(data => {
+            // Esto arma la fecha en español: "18 de Nisán, 5784"
+            const fechaHebrea = data.hd + " de " + data.hm + ", " + data.hy;
+            document.getElementById('fecha-heb').innerText = fechaHebrea;
+        })
+        .catch(err => console.log("Error fecha hebrea:", err));
+}
 
         dbRef.on('value', snap => {
             const val = snap.val();
