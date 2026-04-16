@@ -6,50 +6,60 @@
     <title>Visor Vertical - Ajdut</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
-        body { 
-            margin: 0; background-color: #2e314f; color: white; 
-            font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; 
-            display: flex; flex-direction: column; 
-        }
+    body { 
+        margin: 0; background-color: #2e314f; color: white; 
+        font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; 
+        display: flex; flex-direction: column; 
+    }
 
-        header { 
-            height: 10vh; background: rgba(0,0,0,0.5); 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            border-bottom: 2px solid #d4af37;
-        }
+    header { 
+        height: 10vh; /* 10% de la altura total */
+        background: rgba(0,0,0,0.5); 
+        display: flex; align-items: center; justify-content: center;
+        border-bottom: 2px solid #d4af37;
+    }
 
-        #reloj { font-size: 3rem; font-weight: 200; }
+    .contenido-vertical {
+        height: 82vh; /* Altura controlada para que no empuje al footer */
+        display: flex; flex-direction: column; 
+        padding: 15px; box-sizing: border-box;
+        gap: 15px;
+    }
 
-        /* Contenedor principal vertical */
-        .contenido-vertical {
-            flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 20px;
-        }
+    .marco-foto {
+        flex: 2; width: 100%; display: flex; align-items: center; justify-content: center;
+        background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden;
+    }
 
-        /* Área de fotos (proporción vertical) */
-        .marco-foto {
-            flex: 2; width: 100%; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden;
-        }
+    #foto-principal { 
+        max-width: 100%; max-height: 100%; 
+        object-fit: contain; /* Esto evita que la imagen se deforme o se agrande de más */
+    }
 
-        #foto-principal { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .caja-mensajes {
+        flex: 1; display: flex; align-items: center; justify-content: center;
+        text-align: center; background: rgba(255,255,255,0.05); border-radius: 20px;
+        padding: 20px;
+    }
 
-        /* Área de mensajes destacados */
-        .caja-mensajes {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            text-align: center; background: rgba(255,255,255,0.05); border-radius: 20px;
-            padding: 30px; border: 1px solid rgba(212, 175, 55, 0.3);
-        }
+    #mensaje-texto {
+        font-size: 2.5rem; font-weight: 800; color: #f5d76e; line-height: 1.2;
+        transition: opacity 0.8s ease;
+    }
 
-        #mensaje-texto {
-            font-size: 3rem; font-weight: 800; color: #f5d76e; line-height: 1.2;
-            transition: opacity 0.8s ease;
-        }
+    footer { 
+        height: 8vh; /* 8% de la altura fijo abajo */
+        background: #5d1a1a; display: flex; align-items: center; 
+        overflow: hidden; width: 100%;
+    }
 
-        footer { height: 8vh; background: #5d1a1a; display: flex; align-items: center; overflow: hidden; }
-        .marquee { font-size: 2rem; font-weight: bold; white-space: nowrap; animation: scroll 15s linear infinite; padding-left: 100%; }
+    .marquee { 
+        font-size: 2rem; font-weight: bold; white-space: nowrap; 
+        animation: scroll 15s linear infinite; padding-left: 100%; 
+    }
 
-        @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-200%); } }
-    </style>
+    @keyframes scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-200%); } }
+</style>
 </head>
 <body>
 
