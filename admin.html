@@ -10,13 +10,16 @@
         label { font-weight: bold; display: block; margin-top: 15px; margin-bottom: 5px; color: #2e314f; }
         input, select, button, textarea { width: 100%; padding: 12px; margin-bottom: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
         
-        .sedes-container { background: #fdf2d5; border: 1px solid #d4af37; padding: 15px; border-radius: 8px; display: flex; justify-content: space-around; margin-bottom: 15px; }
+        .sedes-container { background: #fdf2d5; border: 1px solid #d4af37; padding: 15px; border-radius: 8px; display: flex; justify-content: space-around; margin-bottom: 15px; flex-wrap: wrap; gap: 10px; }
         .sede-option { cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; font-weight: bold; }
         .sede-option input { width: auto; margin: 0; }
+        
+        /* Estilo para distinguir la pantalla vertical de Ajdut */
+        .sede-ajdut { color: #e67e22; border: 1px solid #e67e22; padding: 5px 10px; border-radius: 5px; background: #fffaf5; }
 
         /* Botón dinámico */
         #btnSubir { background: #2e314f; color: white; border: none; cursor: pointer; font-weight: bold; transition: 0.3s; padding: 15px; }
-        #btnSubir.modo-edit { background: #27ae60; } /* Verde cuando editamos */
+        #btnSubir.modo-edit { background: #27ae60; } 
         #btnSubir:hover { opacity: 0.9; }
 
         #horarios { background: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #2e314f; display: none; }
@@ -40,6 +43,7 @@
         <label class="sede-option"><input type="checkbox" class="sede-check" value="primaria"> Primaria</label>
         <label class="sede-option"><input type="checkbox" class="sede-check" value="kheila-gan"> Kheila/Gan</label>
         <label class="sede-option"><input type="checkbox" class="sede-check" value="secundaria"> Secundaria</label>
+        <label class="sede-option sede-ajdut"><input type="checkbox" class="sede-check" value="ajdut"> 📱 Ajdut (Vertical)</label>
     </div>
 
     <label>TIPO DE PUBLICACIÓN:</label>
@@ -82,6 +86,7 @@
             <option value="primaria">Primaria</option>
             <option value="kheila-gan">Kheila/Gan</option>
             <option value="secundaria">Secundaria</option>
+            <option value="ajdut">Ajdut (Vertical)</option>
         </select>
         <div id="historial">Cargando...</div>
     </div>
@@ -137,7 +142,6 @@
             });
         });
         
-        // Reset visual tras publicar
         btnSubir.innerText = "🚀 PUBLICAR AHORA";
         btnSubir.classList.remove('modo-edit');
         document.getElementById('contenido').value = "";
@@ -172,7 +176,6 @@
             const data = snap.val();
             const item = (cat === 'zocalo') ? data.zocalo : data[cat][i];
 
-            // Cargar datos
             document.getElementById('contenido').value = (cat === 'fotos') ? item.url : (cat === 'eventos' ? item.msg : item);
             const sel = document.getElementById('tipo');
             if (cat === 'texto') sel.value = 'texto';
@@ -190,11 +193,10 @@
             
             document.querySelectorAll('.sede-check').forEach(cb => cb.checked = (cb.value === sede));
             
-            // Cambio visual de botón
             btnSubir.innerText = "💾 GUARDAR CAMBIOS";
             btnSubir.classList.add('modo-edit');
             
-            borrar(cat, i); // Lo quita del historial para re-subirlo
+            borrar(cat, i);
             window.scrollTo({ top: 0, behavior: 'smooth' });
         });
     }
@@ -204,6 +206,7 @@
         const ref = db.ref('cartelera/' + sede);
         ref.once('value').then(snap => {
             let data = snap.val();
+            if(!data) return;
             if(cat === 'zocalo') data.zocalo = ""; else if(data[cat]) data[cat].splice(i, 1);
             ref.set(data);
         });
