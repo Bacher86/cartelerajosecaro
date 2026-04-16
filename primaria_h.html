@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cartelera Primaria - Horizontal</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; background-color: #1a1c2c; color: white; 
+            font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; 
+            display: flex; flex-direction: column; 
+        }
+
+        /* HEADER HORIZONTAL */
+        header { 
+            height: 15vh; background: rgba(0,0,0,0.6); 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 50px; border-bottom: 3px solid #d4af37; box-sizing: border-box;
+        }
+
+        .logo { height: 10vh; width: auto; }
+
+        .fechas-container { text-align: center; }
+        #fecha-greg { font-size: 1.8rem; color: #d4af37; font-weight: 700; text-transform: capitalize; }
+        #fecha-heb { font-size: 1.3rem; color: #ffffff; margin-top: 5px; }
+
+        #reloj { font-size: 4.5rem; font-weight: 200; min-width: 200px; text-align: right; }
+
+        /* CUERPO PRINCIPAL HORIZONTAL (Foto Izq, Texto Der) */
+        .main-content {
+            flex: 1; display: flex; padding: 30px; gap: 30px; box-sizing: border-box; align-items: center;
+        }
+
+        .contenedor-foto {
+            flex: 1.5; height: 100%; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.3); border-radius: 25px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
+        }
+        #foto-principal { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+        .contenedor-texto {
+            flex: 1; height: 100%; display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.05); border-radius: 25px; padding: 40px; text-align: center;
+        }
+        #mensaje-texto { font-size: 3.5rem; font-weight: 900; color: #f5d76e; line-height: 1.1; }
+
+        /* FOOTER ZOCALO */
+        footer { 
+            height: 10vh; background: #5d1a1a; display: flex; align-items: center; 
+            overflow: hidden; border-top: 2px solid #d4af37;
+        }
+        .marquee { font-size: 2.5rem; font-weight: bold; white-space: nowrap; animation: scroll 25s linear infinite; }
+        @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="logo.png" class="logo" alt="Logo">
+        <div class="fechas-container">
+            <div id="fecha-greg">Cargando...</div>
+            <div id="fecha-heb"></div>
+        </div>
+        <div id="reloj">00:00</div>
+    </header>
+
+    <div class="main-content">
+        <div class="contenedor-foto">
+            <img id="foto-principal" src="" style="display:none;">
+        </div>
+        <div class="contenedor-texto">
+            <div id="mensaje-texto">Cargando información...</div>
+        </div>
+    </div>
+
+    <footer>
+        <div class="marquee" id="texto-zocalo">Cargando noticias de Primaria...</div>
+    </footer>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
+            authDomain: "cartelera-nube.firebaseapp.com",
+            databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
+            projectId: "cartelera-nube",
+            storageBucket: "cartelera-nube.firebasestorage.app",
+            messagingSenderId: "333887658907",
+            appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
+        };
+        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+        const dbRef = firebase.database().ref('cartelera/primaria');
+
+        let data = { fotos: [], texto: [], zocalo: "" };
+        let idxF = 0; let idxT = 0;
+
+        function actualizarReloj() {
+            const ahora = new Date();
+            document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+            document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
+            
+            fetch('https://www.hebcal.com/converter?cfg=json&gy='+ahora.getFullYear()+'&gm='+(ahora.getMonth()+1)+'&gd='+ahora.getDate()+'&g2h=1')
+                .then(res => res.json()).then(d => {
+                    document.getElementById('fecha-heb').innerText = d.hd + " de " + d.hm + ", " + d.hy;
+                });
+        }
+
+        dbRef.on('value', snap => {
+            const val = snap.val();
+            if(val) {
+                data = val;
+                document.getElementById('texto-zocalo').innerText = data.zocalo || "Sede Primaria";
+                rotar();
+            }
+        });
+
+        function rotar() {
+            if (data.fotos && data.fotos.length > 0) {
+                idxF = (idxF + 1) % data.fotos.length;
+                const img = document.getElementById('foto-principal');
+                img.src = data.fotos[idxF].url;
+                img.style.display = 'block';
+            }
+            if (data.texto && data.texto.length > 0) {
+                idxT = (idxT + 1) % data.texto.length;
+                document.getElementById('mensaje-texto').innerText = data.texto[idxT];
+            }
+        }
+
+        setInterval(actualizarReloj, 1000);
+        setInterval(rotar, 10000);
+        actualizarReloj();
+    </script>
+</body>
+</html>
