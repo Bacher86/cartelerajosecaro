@@ -12,12 +12,29 @@
         display: flex; flex-direction: column; 
     }
 
-    header { 
-        height: 10vh; /* 10% de la altura total */
-        background: rgba(0,0,0,0.5); 
-        display: flex; align-items: center; justify-content: center;
-        border-bottom: 2px solid #d4af37;
-    }
+   header { 
+    height: 12vh; 
+    background: rgba(0,0,0,0.5); 
+    display: flex; 
+    flex-direction: column; /* Apila el logo sobre el reloj */
+    align-items: center; 
+    justify-content: center;
+    border-bottom: 2px solid #d4af37;
+    padding: 10px 0;
+}
+
+.logo-ajdut { 
+    max-height: 6vh; /* Ajusta el tamaño para que no tape todo */
+    width: auto; 
+    object-fit: contain;
+    margin-bottom: 5px;
+}
+
+#reloj { 
+    font-size: 2.5rem; 
+    font-weight: 200; 
+    line-height: 1;
+}
 
     .contenido-vertical {
         height: 82vh; /* Altura controlada para que no empuje al footer */
@@ -63,9 +80,10 @@
 </head>
 <body>
 
-    <header>
-        <div id="reloj">00:00</div>
-    </header>
+   <header>
+    <img src="Adjut.png" class="logo-ajdut" alt="Logo Ajdut">
+    <div id="reloj">00:00</div>
+</header>
 
     <div class="contenido-vertical">
         <div class="marco-foto">
