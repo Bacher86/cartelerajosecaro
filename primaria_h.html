@@ -160,13 +160,12 @@
             const esVideo = item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be') || item.formato === 'video');
 
             if (esVideo) {
-                if(!youtubeReady) return; // Esperar a que la API de YT cargue
+                if(!youtubeReady) return;
 
                 clearInterval(rotacionInterval);
                 rotacionInterval = null;
                 document.body.classList.add('modo-video');
                 
-                // --- EXTRACCIÓN DE ID MEJORADA (Incluye Shorts) ---
                 let videoId = "";
                 if (item.url.includes('v=')) {
                     videoId = item.url.split('v=')[1].split('&')[0];
@@ -175,7 +174,6 @@
                 } else {
                     videoId = item.url.split('/').pop().split('?')[0];
                 }
-                // --------------------------------------------------
 
                 img.style.display = 'none';
                 ytContainer.style.display = 'block';
@@ -184,28 +182,41 @@
                     player = new YT.Player('player-yt', {
                         height: '100%', width: '100%', videoId: videoId,
                         playerVars: { 'autoplay': 1, 'mute': 1, 'controls': 0, 'modestbranding': 1, 'rel': 0 },
-                        events: { 'onStateChange': onPlayerStateChange }
+                        events: { 
+                            'onStateChange': onPlayerStateChange,
+                            'onReady': (e) => {
+                                e.target.playVideo();
+                                // SEGURO: Si el video no termina en su tiempo + 5 seg, forzar rotación
+                                const duracion = e.target.getDuration();
+                                if(duracion > 0) {
+                                    clearTimeout(window.seguroVideo);
+                                    window.seguroVideo = setTimeout(() => {
+                                        console.log("Seguro activado: Forzando rotación");
+                                        rotar();
+                                        restartInterval();
+                                    }, (duracion + 5) * 1000);
+                                }
+                            }
+                        }
                     });
                 } else {
                     player.loadVideoById({ videoId: videoId });
                     player.mute();
                     player.playVideo();
+                    
+                    // SEGURO para reproductor ya existente
+                    setTimeout(() => {
+                        const duracion = player.getDuration();
+                        if(duracion > 0) {
+                            clearTimeout(window.seguroVideo);
+                            window.seguroVideo = setTimeout(() => {
+                                console.log("Seguro activado (load): Forzando rotación");
+                                rotar();
+                                restartInterval();
+                            }, (duracion + 5) * 1000);
+                        }
+                    }, 2000); // Esperamos 2 seg a que cargue la info del video
                 }
-            } else {
-                document.body.classList.remove('modo-video');
-                ytContainer.style.display = 'none';
-                if(player && player.stopVideo) player.stopVideo();
-                
-                img.src = item.url;
-                img.style.display = 'block';
-
-                if (data.texto && data.texto.length > 0) {
-                    idxT = (idxT + 1) % data.texto.length;
-                    document.getElementById('mensaje-texto').innerText = data.texto[idxT];
-                }
-                
-                // Si volvimos de un video, reiniciamos el intervalo de tiempo
-                if(!rotacionInterval) restartInterval();
             }
         }
 
