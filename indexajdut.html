@@ -100,33 +100,23 @@
             messagingSenderId: "333887658907",
             appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
         };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const dbRef = firebase.database().ref('cartelera/ajdut');
 
+        // Variables Globales
         let data = { fotos: [], texto: [], zocalo: "" };
         let idxF = -1; let idxT = 0;
-        let player;
-        let rotacionInterval;
+        let player = null;
+        let rotacionInterval = null;
+        let youtubeReady = false;
+        let seguroVideo = null;
         const TIEMPO_FOTO = 10000;
 
-        // INICIO DE LA APLICACIÓN
-        window.onload = () => {
-            actualizarReloj();
-            setInterval(actualizarReloj, 1000);
-            
-            dbRef.on('value', snap => {
-                const val = snap.val();
-                if(val) {
-                    data = val;
-                    document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
-                    if(!rotacionInterval) {
-                        rotar();
-                        restartInterval();
-                    }
-                }
-            });
-        };
+        // 1. YouTube API
+        function onYouTubeIframeAPIReady() {
+            youtubeReady = true;
+            console.log("YouTube API Ready");
+        }
 
+        // 2. Reloj y Fechas
         function actualizarReloj() {
             const ahora = new Date();
             document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
@@ -135,21 +125,28 @@
             fetch('https://www.hebcal.com/converter?cfg=json&gy='+ahora.getFullYear()+'&gm='+(ahora.getMonth()+1)+'&gd='+ahora.getDate()+'&g2h=1')
                 .then(res => res.json()).then(d => {
                     document.getElementById('fecha-heb').innerText = d.hd + " de " + d.hm + ", " + d.hy;
-                }).catch(e => console.log("Error Hebcal"));
+                }).catch(() => {});
         }
 
+        // 3. Lógica de Rotación
         function rotar() {
-            if (!data.fotos || data.fotos.length === 0) return;
+            if (!data.fotos || data.fotos.length === 0) {
+                document.getElementById('mensaje-texto').innerText = (data.texto && data.texto.length > 0) ? data.texto[0] : "Ajdut";
+                return;
+            }
 
             idxF = (idxF + 1) % data.fotos.length;
             const item = data.fotos[idxF];
             const img = document.getElementById('foto-principal');
             const ytContainer = document.getElementById('contenedor-youtube');
 
-            const esVideo = item.url.includes('youtube.com') || item.url.includes('youtu.be') || item.formato === 'video';
+            const esVideo = item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be') || item.formato === 'video');
 
             if (esVideo) {
-                if(!youtubeReady) return;
+                if(!youtubeReady) {
+                    setTimeout(rotar, 2000);
+                    return;
+                }
 
                 clearInterval(rotacionInterval);
                 rotacionInterval = null;
@@ -175,61 +172,86 @@
                             'onStateChange': onPlayerStateChange,
                             'onReady': (e) => {
                                 e.target.playVideo();
-                                // SEGURO: Si el video no termina en su tiempo + 5 seg, forzar rotación
-                                const duracion = e.target.getDuration();
-                                if(duracion > 0) {
-                                    clearTimeout(window.seguroVideo);
-                                    window.seguroVideo = setTimeout(() => {
-                                        console.log("Seguro activado: Forzando rotación");
-                                        rotar();
-                                        restartInterval();
-                                    }, (duracion + 5) * 1000);
-                                }
-                            }
+                                programarSeguro(e.target.getDuration());
+                            },
+                            'onError': () => { rotar(); }
                         }
                     });
                 } else {
                     player.loadVideoById({ videoId: videoId });
                     player.mute();
                     player.playVideo();
-                    
-                    // SEGURO para reproductor ya existente
-                    setTimeout(() => {
-                        const duracion = player.getDuration();
-                        if(duracion > 0) {
-                            clearTimeout(window.seguroVideo);
-                            window.seguroVideo = setTimeout(() => {
-                                console.log("Seguro activado (load): Forzando rotación");
-                                rotar();
-                                restartInterval();
-                            }, (duracion + 5) * 1000);
-                        }
-                    }, 2000); // Esperamos 2 seg a que cargue la info del video
+                    setTimeout(() => programarSeguro(player.getDuration()), 2000);
                 }
+            } else {
+                // Modo Foto/Anuncio
+                document.body.classList.remove('modo-video');
+                ytContainer.style.display = 'none';
+                if(player && player.stopVideo) player.stopVideo();
+                clearTimeout(seguroVideo);
+                
+                img.src = item.url;
+                img.style.display = 'block';
+
+                if (data.texto && data.texto.length > 0) {
+                    idxT = (idxT + 1) % data.texto.length;
+                    document.getElementById('mensaje-texto').innerText = data.texto[idxT];
+                }
+                
+                if(!rotacionInterval) restartInterval();
+            }
+        }
+
+        function programarSeguro(duracion) {
+            clearTimeout(seguroVideo);
+            if(duracion > 0) {
+                seguroVideo = setTimeout(() => {
+                    rotar();
+                    restartInterval();
+                }, (duracion + 5) * 1000);
             }
         }
 
         function onPlayerStateChange(event) {
-    // Si el video termina (0) o da error o se detiene
-    if (event.data === YT.PlayerState.ENDED) {
-        console.log("Video terminó naturalmente.");
-        clearTimeout(window.seguroVideo); // Quitamos el seguro
-        rotar();
-        restartInterval();
-    }
-}
+            if (event.data === YT.PlayerState.ENDED) {
+                clearTimeout(seguroVideo);
+                rotar();
+                restartInterval();
+            }
+        }
 
         function restartInterval() {
             clearInterval(rotacionInterval);
             rotacionInterval = setInterval(rotar, TIEMPO_FOTO);
         }
 
-        // Anti-sueño
+        // 4. Arranque cuando la ventana esté lista
+        window.addEventListener('load', () => {
+            actualizarReloj();
+            setInterval(actualizarReloj, 1000);
+
+            if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+            const dbRef = firebase.database().ref('cartelera/ajdut');
+
+            dbRef.on('value', snap => {
+                const val = snap.val();
+                if(val) {
+                    data = val;
+                    document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
+                    if(!rotacionInterval) {
+                        rotar();
+                        restartInterval();
+                    }
+                }
+            });
+        });
+
+        // Mantenimiento y anti-bloqueo
         setInterval(() => {
             window.scrollBy(0, 1); window.scrollBy(0, -1);
+            if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
         }, 30000);
 
-        // Refresco nocturno 3 AM
         const ahora = new Date();
         const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
         let tiempoRestante = noche.getTime() - ahora.getTime();
