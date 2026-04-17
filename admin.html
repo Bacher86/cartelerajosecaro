@@ -118,12 +118,18 @@
         }
     };
 
-    btnSubir.onclick = function() {
+   btnSubir.onclick = function() {
         const sedes = Array.from(document.querySelectorAll('.sede-check:checked')).map(cb => cb.value);
         if (sedes.length === 0) return alert("Selecciona al menos una sede.");
         
         const tipo = document.getElementById('tipo').value;
-        const cont = document.getElementById('contenido').value;
+        let cont = document.getElementById('contenido').value;
+
+        // --- CORRECCIÓN PARA SHORTS ---
+        if (tipo === 'video-yt' && cont.includes('/shorts/')) {
+            cont = cont.replace('/shorts/', '/watch?v=');
+        }
+        // ------------------------------
 
         sedes.forEach(sede => {
             const refSede = db.ref('cartelera/' + sede);
