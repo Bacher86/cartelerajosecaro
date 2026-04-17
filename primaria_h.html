@@ -134,6 +134,33 @@
         setInterval(actualizarReloj, 1000);
         setInterval(rotar, 10000);
         actualizarReloj();
+        // Función para engañar al sistema de la TCL y que no se duerma
+function mantenerDespierto() {
+    // 1. Simula un micro-movimiento de scroll
+    window.scrollBy(0, 1);
+    window.scrollBy(0, -1);
+    
+    // 2. Intenta usar la API Wake Lock (si el navegador lo permite)
+    if ('wakeLock' in navigator) {
+        navigator.wakeLock.request('screen').catch(err => {
+            console.log("WakeLock no soportado o denegado");
+        });
+    }
+}
+
+// Ejecutar cada 30 segundos
+setInterval(mantenerDespierto, 30000);
+
+// También, para evitar que el navegador "limpie" la memoria y cierre la pestaña:
+// Refrescamos la página completa una vez al día a las 3 AM (opcional)
+const ahora = new Date();
+const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
+let tiempoHasta3AM = noche.getTime() - ahora.getTime();
+if (tiempoHasta3AM < 0) tiempoHasta3AM += 86400000; 
+
+setTimeout(() => {
+    location.reload();
+}, tiempoHasta3AM);
     </script>
 </body>
 </html>
