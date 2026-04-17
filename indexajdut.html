@@ -43,7 +43,7 @@
             flex: 1; display: flex; align-items: center; justify-content: center;
             text-align: center; background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px;
         }
-        #mensaje-texto { font-size: 3rem; font-weight: 800; color: #f5d76e; line-height: 1.2; transition: opacity 0.5s; }
+        #mensaje-texto { font-size: 3rem; font-weight: 800; color: #f5d76e; line-height: 1.2; }
 
         footer { 
             height: 8vh; background: #5d1a1a; display: flex; align-items: center; 
@@ -91,7 +91,6 @@
     <script src="https://www.youtube.com/iframe_api"></script>
 
     <script>
-        // 1. Configuración
         const firebaseConfig = {
             apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
             authDomain: "cartelera-nube.firebaseapp.com",
@@ -105,13 +104,12 @@
         const dbRef = firebase.database().ref('cartelera/ajdut');
 
         let data = { fotos: [], texto: [], zocalo: "" };
-        let idxF = -1; 
-        let idxT = 0;
+        let idxF = -1; let idxT = 0;
         let player;
         let rotacionInterval;
         const TIEMPO_FOTO = 10000;
 
-        // 2. Inicio Forzado
+        // INICIO DE LA APLICACIÓN
         window.onload = () => {
             actualizarReloj();
             setInterval(actualizarReloj, 1000);
@@ -121,9 +119,8 @@
                 if(val) {
                     data = val;
                     document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
-                    // Solo iniciamos la rotación la primera vez que recibimos datos
                     if(!rotacionInterval) {
-                        rotar(); 
+                        rotar();
                         restartInterval();
                     }
                 }
@@ -149,7 +146,6 @@
             const img = document.getElementById('foto-principal');
             const ytContainer = document.getElementById('contenedor-youtube');
 
-            // Detectar si es video
             const esVideo = item.url.includes('youtube.com') || item.url.includes('youtu.be') || item.formato === 'video';
 
             if (esVideo) {
@@ -175,8 +171,7 @@
                         player.playVideo();
                     }
                 } else {
-                    // Si falla la API de YT, saltamos en 5 seg
-                    setTimeout(rotar, 5000);
+                    setTimeout(rotar, 5000); // Salto de emergencia si falla YT
                 }
             } else {
                 document.body.classList.remove('modo-video');
@@ -186,181 +181,6 @@
                 img.src = item.url;
                 img.style.display = 'block';
 
-                if (data.texto && data.texto.length > 0) {
-                    idxT = (idxT + 1) % data.texto.length;
-                    const msgEl = document.getElementById('mensaje-texto');
-                    msgEl.innerText = data.texto[idxT];
-                }
-            }
-        }
-
-        function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) {
-                restartInterval();
-                rotar();
-            }
-        }
-
-        function restartInterval() {
-            clearInterval(rotacionInterval);
-            rotacionInterval = setInterval(rotar, TIEMPO_FOTO);
-        }
-
-        // --- MANTENER DESPIERTO ---
-        setInterval(() => {
-            window.scrollBy(0, 1); window.scrollBy(0, -1);
-        }, 30000);
-
-        // --- REINICIO AUTOMÁTICO 3 AM ---
-        const ahora = new Date();
-        const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
-        let tiempoRestante = noche.getTime() - ahora.getTime();
-        if (tiempoRestante < 0) tiempoRestante += 86400000;
-        setTimeout(() => { location.reload(); }, tiempoRestante);
-
-    </script>
-</body>
-</html>            flex: 2; width: 100%; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden;
-        }
-        #foto-principal { max-width: 100%; max-height: 100%; object-fit: contain; }
-
-        .caja-mensajes {
-            flex: 1; display: flex; align-items: center; justify-content: center;
-            text-align: center; background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px;
-        }
-        #mensaje-texto { font-size: 3rem; font-weight: 800; color: #f5d76e; line-height: 1.2; }
-
-        footer { 
-            height: 8vh; background: #5d1a1a; display: flex; align-items: center; 
-            overflow: hidden; flex-shrink: 0; border-top: 2px solid #d4af37;
-        }
-        .marquee { font-size: 2.2rem; font-weight: bold; white-space: nowrap; animation: scroll 20s linear infinite; }
-        @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
-
-        /* MODO VIDEO VERTICAL: Ocupa todo el espacio entre header y footer */
-        .modo-video .caja-mensajes, 
-        .modo-video footer { display: none !important; }
-        .modo-video .marco-foto { flex: 1; height: 88vh; border-radius: 0; background: black; }
-        .modo-video .contenido-vertical { padding: 0; }
-    </style>
-</head>
-<body>
-
-    <header>
-        <img src="Adjut.png" class="logo-ajdut" alt="Logo">
-        <div class="fechas-container">
-            <div id="fecha-greg">Cargando fecha...</div>
-            <div id="fecha-heb">Cargando fecha hebrea...</div>
-        </div>
-        <div id="reloj">00:00</div>
-    </header>
-
-    <div class="contenido-vertical" id="main-container">
-        <div class="marco-foto" id="media-box">
-            <img id="foto-principal" src="" style="display:none;">
-            <div id="contenedor-youtube" style="display:none; width:100%; height:100%;">
-                <div id="player-yt"></div>
-            </div>
-        </div>
-        <div class="caja-mensajes">
-            <div id="mensaje-texto">Cargando anuncios...</div>
-        </div>
-    </div>
-
-    <footer>
-        <div class="marquee" id="texto-zocalo">Cargando noticias de la comunidad...</div>
-    </footer>
-
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.youtube.com/iframe_api"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
-            authDomain: "cartelera-nube.firebaseapp.com",
-            databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
-            projectId: "cartelera-nube",
-            storageBucket: "cartelera-nube.firebasestorage.app",
-            messagingSenderId: "333887658907",
-            appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
-        };
-        if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const dbRef = firebase.database().ref('cartelera/ajdut');
-
-        let data = { fotos: [], texto: [], zocalo: "" };
-        let idxF = -1; let idxT = 0;
-        let player;
-        let rotacionInterval;
-        const TIEMPO_FOTO = 10000;
-
-        function onYouTubeIframeAPIReady() {
-            iniciarCartelera();
-        }
-
-        function iniciarCartelera() {
-            actualizarReloj();
-            setInterval(actualizarReloj, 1000);
-            
-            dbRef.on('value', snap => {
-                const val = snap.val();
-                if(val) {
-                    data = val;
-                    document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
-                    if(!rotacionInterval) restartInterval();
-                }
-            });
-        }
-
-        function actualizarReloj() {
-            const ahora = new Date();
-            document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
-            document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
-            
-            fetch('https://www.hebcal.com/converter?cfg=json&gy='+ahora.getFullYear()+'&gm='+(ahora.getMonth()+1)+'&gd='+ahora.getDate()+'&g2h=1')
-                .then(res => res.json()).then(d => {
-                    document.getElementById('fecha-heb').innerText = d.hd + " de " + d.hm + ", " + d.hy;
-                }).catch(e => console.log("Error Hebcal"));
-        }
-
-        function rotar() {
-            if (!data.fotos || data.fotos.length === 0) return;
-
-            idxF = (idxF + 1) % data.fotos.length;
-            const item = data.fotos[idxF];
-            const img = document.getElementById('foto-principal');
-            const ytContainer = document.getElementById('contenedor-youtube');
-
-            if (item.url.includes('youtube.com') || item.url.includes('youtu.be') || item.formato === 'video') {
-                clearInterval(rotacionInterval);
-                document.body.classList.add('modo-video');
-                
-                let videoId = item.url.split('v=')[1] || item.url.split('/').pop();
-                if(videoId.includes('&')) videoId = videoId.split('&')[0];
-
-                img.style.display = 'none';
-                ytContainer.style.display = 'block';
-
-                if (!player) {
-                    player = new YT.Player('player-yt', {
-                        height: '100%', width: '100%', videoId: videoId,
-                        playerVars: { 'autoplay': 1, 'mute': 1, 'controls': 0, 'modestbranding': 1, 'rel': 0 },
-                        events: { 'onStateChange': onPlayerStateChange }
-                    });
-                } else {
-                    player.loadVideoById({ videoId: videoId });
-                    player.mute();
-                    player.playVideo();
-                }
-            } else {
-                document.body.classList.remove('modo-video');
-                ytContainer.style.display = 'none';
-                if(player) player.stopVideo();
-                
-                img.src = item.url;
-                img.style.display = 'block';
-
-                // Rotar texto solo si no hay video
                 if (data.texto && data.texto.length > 0) {
                     idxT = (idxT + 1) % data.texto.length;
                     document.getElementById('mensaje-texto').innerText = data.texto[idxT];
@@ -380,23 +200,17 @@
             rotacionInterval = setInterval(rotar, TIEMPO_FOTO);
         }
 
-        // --- ANTI-SUEÑO TCL ---
-        function mantenerDespierto() {
-            window.scrollBy(0, 1);
-            window.scrollBy(0, -1);
-            if ('wakeLock' in navigator) {
-                navigator.wakeLock.request('screen').catch(err => {});
-            }
-        }
-        setInterval(mantenerDespierto, 30000);
+        // Anti-sueño
+        setInterval(() => {
+            window.scrollBy(0, 1); window.scrollBy(0, -1);
+        }, 30000);
 
-        // --- REFRESCO 3 AM ---
+        // Refresco nocturno 3 AM
         const ahora = new Date();
         const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
-        let tiempoHasta3AM = noche.getTime() - ahora.getTime();        
-        if (tiempoHasta3AM < 0) tiempoHasta3AM += 86400000; 
-        setTimeout(() => { location.reload(); }, tiempoHasta3AM);
-
+        let tiempoRestante = noche.getTime() - ahora.getTime();
+        if (tiempoRestante < 0) tiempoRestante += 86400000;
+        setTimeout(() => { location.reload(); }, tiempoRestante);
     </script>
 </body>
 </html>
