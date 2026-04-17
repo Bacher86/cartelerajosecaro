@@ -89,7 +89,6 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <script src="https://www.youtube.com/iframe_api"></script>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
@@ -208,7 +207,7 @@
         // --- REFRESCO 3 AM ---
         const ahora = new Date();
         const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
-        let tiempoHasta 3AM = noche.getTime() - ahora.getTime();
+        let tiempoHasta3AM = noche.getTime() - ahora.getTime();        
         if (tiempoHasta3AM < 0) tiempoHasta3AM += 86400000; 
         setTimeout(() => { location.reload(); }, tiempoHasta3AM);
 
