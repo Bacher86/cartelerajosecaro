@@ -152,8 +152,16 @@
                 clearInterval(rotacionInterval);
                 document.body.classList.add('modo-video');
                 
-                let videoId = item.url.split('v=')[1] || item.url.split('/').pop();
-                if(videoId && videoId.includes('&')) videoId = videoId.split('&')[0];
+                // --- EXTRACCIÓN MEJORADA DE ID (Incluye Shorts) ---
+                let videoId = "";
+                if (item.url.includes('v=')) {
+                    videoId = item.url.split('v=')[1].split('&')[0];
+                } else if (item.url.includes('/shorts/')) {
+                    videoId = item.url.split('/shorts/')[1].split('?')[0];
+                } else {
+                    videoId = item.url.split('/').pop().split('?')[0];
+                }
+                // --------------------------------------------------
 
                 img.style.display = 'none';
                 ytContainer.style.display = 'block';
@@ -171,7 +179,7 @@
                         player.playVideo();
                     }
                 } else {
-                    setTimeout(rotar, 5000); // Salto de emergencia si falla YT
+                    setTimeout(rotar, 5000);
                 }
             } else {
                 document.body.classList.remove('modo-video');
