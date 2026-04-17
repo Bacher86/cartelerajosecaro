@@ -125,7 +125,6 @@
                 if(val) {
                     data = val;
                     if(data.zocalo) document.getElementById('texto-zocalo').innerText = data.zocalo;
-                    // Forzar rotación inicial si no hay intervalo
                     if(!rotacionInterval) {
                         rotar();
                         restartInterval();
@@ -156,11 +155,13 @@
             const img = document.getElementById('foto-principal');
             const ytContainer = document.getElementById('contenedor-youtube');
 
-            // Detectamos si es video por URL o por el campo formato que viene del Admin
             const esVideo = item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be') || item.formato === 'video');
 
             if (esVideo) {
-                if(!youtubeReady) return;
+                if(!youtubeReady) {
+                    setTimeout(rotar, 2000);
+                    return;
+                }
 
                 clearInterval(rotacionInterval);
                 rotacionInterval = null;
@@ -186,16 +187,7 @@
                             'onStateChange': onPlayerStateChange,
                             'onReady': (e) => {
                                 e.target.playVideo();
-                                // SEGURO: Si el video no termina en su tiempo + 5 seg, forzar rotación
-                                const duracion = e.target.getDuration();
-                                if(duracion > 0) {
-                                    clearTimeout(window.seguroVideo);
-                                    window.seguroVideo = setTimeout(() => {
-                                        console.log("Seguro activado: Forzando rotación");
-                                        rotar();
-                                        restartInterval();
-                                    }, (duracion + 5) * 1000);
-                                }
+                                programarSeguro(e.target.getDuration());
                             }
                         }
                     });
@@ -203,53 +195,63 @@
                     player.loadVideoById({ videoId: videoId });
                     player.mute();
                     player.playVideo();
-                    
-                    // SEGURO para reproductor ya existente
-                    setTimeout(() => {
-                        const duracion = player.getDuration();
-                        if(duracion > 0) {
-                            clearTimeout(window.seguroVideo);
-                            window.seguroVideo = setTimeout(() => {
-                                console.log("Seguro activado (load): Forzando rotación");
-                                rotar();
-                                restartInterval();
-                            }, (duracion + 5) * 1000);
-                        }
-                    }, 2000); // Esperamos 2 seg a que cargue la info del video
+                    setTimeout(() => programarSeguro(player.getDuration()), 2000);
                 }
+            } else {
+                // --- LÓGICA PARA FOTOS (ESTO FALTABA) ---
+                document.body.classList.remove('modo-video');
+                ytContainer.style.display = 'none';
+                if(player && player.stopVideo) player.stopVideo();
+                clearTimeout(window.seguroVideo);
+                
+                img.src = item.url;
+                img.style.display = 'block';
+
+                if (data.texto && data.texto.length > 0) {
+                    idxT = (idxT + 1) % data.texto.length;
+                    document.getElementById('mensaje-texto').innerText = data.texto[idxT];
+                }
+                
+                if(!rotacionInterval) restartInterval();
             }
         }
 
-       function onPlayerStateChange(event) {
-    // Si el video termina (0) o da error o se detiene
-    if (event.data === YT.PlayerState.ENDED) {
-        console.log("Video terminó naturalmente.");
-        clearTimeout(window.seguroVideo); // Quitamos el seguro
-        rotar();
-        restartInterval();
-    }
-}
+        function programarSeguro(duracion) {
+            clearTimeout(window.seguroVideo);
+            if(duracion > 0) {
+                window.seguroVideo = setTimeout(() => {
+                    console.log("Seguro: Forzando rotación");
+                    rotar();
+                    restartInterval();
+                }, (duracion + 5) * 1000);
+            }
+        }
+
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                clearTimeout(window.seguroVideo);
+                rotar();
+                restartInterval();
+            }
+        }
 
         function restartInterval() {
             clearInterval(rotacionInterval);
             rotacionInterval = setInterval(rotar, TIEMPO_FOTO);
         }
 
-        // Anti-sueño TCL
         setInterval(() => {
             window.scrollBy(0, 1);
             window.scrollBy(0, -1);
             if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
         }, 30000);
 
-        // Refresco 3 AM
         const ahora = new Date();
         const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
         let tiempoHasta3AM = noche.getTime() - ahora.getTime();
         if (tiempoHasta3AM < 0) tiempoHasta3AM += 86400000;
         setTimeout(() => location.reload(), tiempoHasta3AM);
 
-        // Arrancar
         iniciarCartelera();
     </script>
 </body>
