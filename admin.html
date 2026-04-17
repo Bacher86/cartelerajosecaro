@@ -54,139 +54,6 @@
         <option value="evento">⚠️ MENSAJE IMPORTANTE (Bloqueo)</option>
     </select>
 
-    <textarea id="contenido" placeholder="Escribe el mensaje o pega el link de YouTube aquí..." rows="4"></textarea>
-
-    <div id="horarios">
-        <label>VIGENCIA Y HORARIOS:</label>
-        <div style="display: flex; gap: 10px;">
-            <input type="date" id="fecha-inicio">
-            <input type="date" id="fecha-fin">
-        </div>
-        <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <input type="time" id="inicio" value="08:00"> 
-            <input type="time" id="fin" value="16:00">
-        </div>
-        <div class="dias-selector">
-            <label>L <input type="checkbox" class="dia-check" value="1" checked></label>
-            <label>M <input type="checkbox" class="dia-check" value="2" checked></label>
-            <label>M <input type="checkbox" class="dia-check" value="3" checked></label>
-            <label>J <input type="checkbox" class="dia-check" value="4" checked></label>
-            <label>V <input type="checkbox" class="dia-check" value="5" checked></label>
-            <label>S <input type="checkbox" class="dia-check" value="6"></label>
-            <label>D <input type="checkbox" class="dia-check" value="0"></label>
-        </div>
-    </div>
-
-    <button id="btnSubir">🚀 PUBLICAR AHORA</button>
-
-    <div class="historial-container">
-        <label>VER Y EDITAR HISTORIAL DE:</label>
-        <select id="ver-historial-sede" onchange="cargarHistorial()">
-            <option value="primaria">Primaria</option>
-            <option value="kheila-gan">Kheila/Gan</option>
-            <option value="secundaria">Secundaria</option>
-            <option value="ajdut">Ajdut (Vertical)</option>
-        </select>
-        <div id="historial">Cargando...</div>
-    </div>
-</div>
-
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
-<script>
-    const firebaseConfig = {
-        apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
-        authDomain: "cartelera-nube.firebaseapp.com",
-        databaseURL: "https://cartelera-nube-default-rtdb.firebaseio.com",
-        projectId: "cartelera-nube",
-        storageBucket: "cartelera-nube.firebasestorage.app",
-        messagingSenderId: "333887658907",
-        appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const db = firebase.database();
-
-    const btnSubir = document.getElementById('btnSubir');
-
-    document.getElementById('tipo').onchange = function() {
-        document.getElementById('horarios').style.display = (this.value === 'evento') ? 'block' : 'none';
-        if(this.value === 'video-yt') {
-            document.getElementById('contenido').placeholder = "Pega aquí el link de YouTube (ej: https://www.youtube.com/watch?v=...)";
-        } else {
-            document.getElementById('contenido').placeholder = "Escribe el mensaje o pega el link aquí...";
-        }
-    };
-
-    btnSubir.onclick = function() {
-        const sedes = Array.from(document.querySelectorAll('.sede-check:checked')).map(cb => cb.value);
-        if (sedes.length === 0) return alert("Selecciona al menos una sede.");
-        
-        const tipo = document.getElementById('tipo').value;
-        const cont = document.getElementById('contenido').value;
-
-        sedes.forEach(sede => {
-            const refSede = db.ref('cartelera/' + sede);
-            refSede.once('value').then(snap => {
-                let data = snap.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
-                
-                if (tipo === 'texto') { if(!data.texto) data.texto=[]; data.texto.push(cont); }
-                else if (tipo === 'foto') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'normal'}); }
-                else if (tipo === 'foto-completa') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'completa'}); }
-                else if (tipo === 'video-yt') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'video'}); }
-                else if (tipo === 'zocalo') data.zocalo = cont;
-                else if (tipo === 'evento') {
-                    if(!data.eventos) data.eventos = [];
-                    const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
-                    data.eventos.push({
-                        msg: cont, inicio: document.getElementById('inicio').value, fin: document.getElementById('fin').value,
-                        dias: dias, fechaInicio: document.getElementById('fecha-inicio').value || null, fechaFin: document.getElementById('fecha-fin').value || null
-                    });
-                }
-                return refSede.set(data);
-            });
-        });
-        
-        btnSubir.innerText = "🚀 PUBLICAR AHORA";
-        btnSubir.classList.remove('modo-edit');
-        document.getElementById('contenido').value = "";
-        alert("¡Acción realizada!");
-    };
-
-    function cargarHistorial() {
-        const sede = document.getElementById('ver-historial-sede').value;
-        db.ref('cartelera/' + sede).on('value', snap => {
-            const h = document.getElementById('historial');
-            const data = snap.val();
-            h.innerHTML = "";
-            if(!data) { h.innerHTML = "Sede vacía."; return; }
-
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += itemHTML(`📝 ${t.substring(0,25)}...`, 'texto', i));
-            if(data.fotos) data.fotos.forEach((f, i) => {
-                const icono = f.formato === 'video' ? '🎬' : '🖼️';
-                h.innerHTML += itemHTML(`${icono} ${f.formato === 'video' ? 'Video YT' : 'Foto'} ${i+1}`, 'fotos', i);
-            });
-            if(data.
-<div class="panel">
-    <h2 id="titulo-panel">🚀 Panel de Control Escolar</h2>
-    
-    <label>🏢 EDIFICIOS DESTINO:</label>
-    <div class="sedes-container">
-        <label class="sede-option"><input type="checkbox" class="sede-check" value="primaria"> Primaria</label>
-        <label class="sede-option"><input type="checkbox" class="sede-check" value="kheila-gan"> Gan</label>
-        <label class="sede-option"><input type="checkbox" class="sede-check" value="secundaria"> Secundaria</label>
-        <label class="sede-option sede-ajdut"><input type="checkbox" class="sede-check" value="ajdut"> 📱 Ajdut (Vertical)</label>
-    </div>
-
-    <label>TIPO DE PUBLICACIÓN:</label>
-    <select id="tipo">
-        <option value="texto">📝 Mensaje Central (Rotativo)</option>
-        <option value="foto">🖼️ Foto (Formato Normal)</option>
-        <option value="foto-completa">📺 Foto (Pantalla Completa)</option>
-        <option value="zocalo">🎞️ Noticia Zócalo (Abajo)</option>
-        <option value="evento">⚠️ MENSAJE IMPORTANTE (Bloqueo)</option>
-    </select>
-
     <textarea id="contenido" placeholder="Escribe el mensaje o pega el link aquí..." rows="4"></textarea>
 
     <div id="horarios">
@@ -244,6 +111,11 @@
 
     document.getElementById('tipo').onchange = function() {
         document.getElementById('horarios').style.display = (this.value === 'evento') ? 'block' : 'none';
+        if(this.value === 'video-yt') {
+            document.getElementById('contenido').placeholder = "Pega el link de YT aquí (ej: https://www.youtube.com/watch?v=...)";
+        } else {
+            document.getElementById('contenido').placeholder = "Escribe el mensaje o pega el link aquí...";
+        }
     };
 
     btnSubir.onclick = function() {
@@ -258,10 +130,25 @@
             refSede.once('value').then(snap => {
                 let data = snap.val() || { texto: [], fotos: [], zocalo: "", eventos: [] };
                 
-                if (tipo === 'texto') { if(!data.texto) data.texto=[]; data.texto.push(cont); }
-                else if (tipo === 'foto') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'normal'}); }
-                else if (tipo === 'foto-completa') { if(!data.fotos) data.fotos=[]; data.fotos.push({url: cont, formato: 'completa'}); }
-                else if (tipo === 'zocalo') data.zocalo = cont;
+                if (tipo === 'texto') { 
+                    if(!data.texto) data.texto=[]; 
+                    data.texto.push(cont); 
+                }
+                else if (tipo === 'foto') { 
+                    if(!data.fotos) data.fotos=[]; 
+                    data.fotos.push({url: cont, formato: 'normal'}); 
+                }
+                else if (tipo === 'foto-completa') { 
+                    if(!data.fotos) data.fotos=[]; 
+                    data.fotos.push({url: cont, formato: 'completa'}); 
+                }
+                else if (tipo === 'video-yt') { 
+                    if(!data.fotos) data.fotos=[]; 
+                    data.fotos.push({url: cont, formato: 'video'}); 
+                }
+                else if (tipo === 'zocalo') {
+                    data.zocalo = cont;
+                }
                 else if (tipo === 'evento') {
                     if(!data.eventos) data.eventos = [];
                     const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
@@ -277,7 +164,7 @@
         btnSubir.innerText = "🚀 PUBLICAR AHORA";
         btnSubir.classList.remove('modo-edit');
         document.getElementById('contenido').value = "";
-        alert("¡Acción realizada!");
+        alert("¡Publicado con éxito!");
     };
 
     function cargarHistorial() {
@@ -289,9 +176,16 @@
             if(!data) { h.innerHTML = "Sede vacía."; return; }
 
             if(data.texto) data.texto.forEach((t, i) => h.innerHTML += itemHTML(`📝 ${t.substring(0,25)}...`, 'texto', i));
-            if(data.fotos) data.fotos.forEach((f, i) => h.innerHTML += itemHTML(`🖼️ Foto ${i+1}`, 'fotos', i));
+            
+            if(data.fotos) data.fotos.forEach((f, i) => {
+                const icono = f.formato === 'video' ? '🎬' : '🖼️';
+                const nombre = f.formato === 'video' ? 'Video YouTube' : (f.formato === 'completa' ? 'Foto Completa' : 'Foto Normal');
+                h.innerHTML += itemHTML(`${icono} ${nombre} ${i+1}`, 'fotos', i);
+            });
+
             if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += itemHTML(`⚠️ BLOQUEO: ${e.msg.substring(0,15)}...`, 'eventos', i));
-            if(data.zocalo) h.innerHTML += itemHTML(`🎞️ Zócalo Actual`, 'zocalo', 0);
+            
+            if(data.zocalo) h.innerHTML += itemHTML(`🎞️ Zócalo: ${data.zocalo.substring(0,20)}...`, 'zocalo', 0);
         });
     }
 
@@ -310,9 +204,14 @@
 
             document.getElementById('contenido').value = (cat === 'fotos') ? item.url : (cat === 'eventos' ? item.msg : item);
             const sel = document.getElementById('tipo');
+            
             if (cat === 'texto') sel.value = 'texto';
             else if (cat === 'zocalo') sel.value = 'zocalo';
-            else if (cat === 'fotos') sel.value = (item.formato === 'completa' ? 'foto-completa' : 'foto');
+            else if (cat === 'fotos') {
+                if (item.formato === 'video') sel.value = 'video-yt';
+                else if (item.formato === 'completa') sel.value = 'foto-completa';
+                else sel.value = 'foto';
+            }
             else if (cat === 'eventos') {
                 sel.value = 'evento';
                 document.getElementById('horarios').style.display = 'block';
@@ -339,10 +238,12 @@
         ref.once('value').then(snap => {
             let data = snap.val();
             if(!data) return;
-            if(cat === 'zocalo') data.zocalo = ""; else if(data[cat]) data[cat].splice(i, 1);
+            if(cat === 'zocalo') data.zocalo = ""; 
+            else if(data[cat]) data[cat].splice(i, 1);
             ref.set(data);
         });
     };
+
     cargarHistorial();
 </script>
 </body>
