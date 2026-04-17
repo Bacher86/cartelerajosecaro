@@ -197,11 +197,14 @@
         }
 
         function onPlayerStateChange(event) {
-            if (event.data === YT.PlayerState.ENDED) {
-                restartInterval();
-                rotar();
-            }
-        }
+    // Si el video termina (0) o da error o se detiene
+    if (event.data === YT.PlayerState.ENDED) {
+        console.log("Video terminó naturalmente.");
+        clearTimeout(window.seguroVideo); // Quitamos el seguro
+        rotar();
+        restartInterval();
+    }
+}
 
         function restartInterval() {
             clearInterval(rotacionInterval);
