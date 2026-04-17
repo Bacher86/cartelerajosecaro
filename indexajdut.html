@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visor Vertical - Ajdut</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Visor Vertical - Ajdut Pro</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { 
@@ -13,13 +13,13 @@
         }
 
         header { 
-            height: 14vh; background: rgba(0,0,0,0.5); 
+            height: 12vh; background: rgba(0,0,0,0.5); 
             display: flex; justify-content: space-between; align-items: center; 
             padding: 0 40px; border-bottom: 2px solid #d4af37; box-sizing: border-box;
-            flex-shrink: 0;
+            flex-shrink: 0; z-index: 10;
         }
 
-        .logo-ajdut { height: 9vh; width: auto; object-fit: contain; }
+        .logo-ajdut { height: 8vh; width: auto; object-fit: contain; }
 
         .fechas-container { flex: 1; text-align: center; display: flex; flex-direction: column; gap: 5px; }
         #fecha-greg { font-size: 1.4rem; color: #d4af37; font-weight: 700; text-transform: capitalize; }
@@ -28,8 +28,9 @@
         #reloj { font-size: 3.5rem; font-weight: 200; text-align: right; min-width: 150px; }
 
         .contenido-vertical {
-            height: 78vh; display: flex; flex-direction: column; 
-            padding: 20px; box-sizing: border-box; gap: 20px; flex-grow: 1;
+            flex: 1; display: flex; flex-direction: column; 
+            padding: 20px; box-sizing: border-box; gap: 20px;
+            overflow: hidden; transition: all 0.5s ease;
         }
 
         .marco-foto {
@@ -44,9 +45,18 @@
         }
         #mensaje-texto { font-size: 3rem; font-weight: 800; color: #f5d76e; line-height: 1.2; }
 
-        footer { height: 8vh; background: #5d1a1a; display: flex; align-items: center; overflow: hidden; flex-shrink: 0; }
+        footer { 
+            height: 8vh; background: #5d1a1a; display: flex; align-items: center; 
+            overflow: hidden; flex-shrink: 0; border-top: 2px solid #d4af37;
+        }
         .marquee { font-size: 2.2rem; font-weight: bold; white-space: nowrap; animation: scroll 20s linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
+
+        /* MODO VIDEO VERTICAL: Ocupa todo el espacio entre header y footer */
+        .modo-video .caja-mensajes, 
+        .modo-video footer { display: none !important; }
+        .modo-video .marco-foto { flex: 1; height: 88vh; border-radius: 0; background: black; }
+        .modo-video .contenido-vertical { padding: 0; }
     </style>
 </head>
 <body>
@@ -60,9 +70,12 @@
         <div id="reloj">00:00</div>
     </header>
 
-    <div class="contenido-vertical">
-        <div class="marco-foto">
+    <div class="contenido-vertical" id="main-container">
+        <div class="marco-foto" id="media-box">
             <img id="foto-principal" src="" style="display:none;">
+            <div id="contenedor-youtube" style="display:none; width:100%; height:100%;">
+                <div id="player-yt"></div>
+            </div>
         </div>
         <div class="caja-mensajes">
             <div id="mensaje-texto">Cargando anuncios...</div>
@@ -75,6 +88,8 @@
 
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
+
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAzBO8TzuGeAV-_nsGDgIWckWhV_vkOhTY",
@@ -86,55 +101,117 @@
             appId: "1:333887658907:web:c9d3904ad02a8fd9fe1f3e"
         };
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const dbRef = db.ref('cartelera/ajdut');
+        const dbRef = firebase.database().ref('cartelera/ajdut');
+
+        let data = { fotos: [], texto: [], zocalo: "" };
+        let idxF = -1; let idxT = 0;
+        let player;
+        let rotacionInterval;
+        const TIEMPO_FOTO = 10000;
+
+        function onYouTubeIframeAPIReady() {
+            iniciarCartelera();
+        }
+
+        function iniciarCartelera() {
+            actualizarReloj();
+            setInterval(actualizarReloj, 1000);
+            
+            dbRef.on('value', snap => {
+                const val = snap.val();
+                if(val) {
+                    data = val;
+                    document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
+                    if(!rotacionInterval) restartInterval();
+                }
+            });
+        }
 
         function actualizarReloj() {
             const ahora = new Date();
             document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
             document.getElementById('fecha-greg').innerText = ahora.toLocaleDateString('es-AR', {weekday: 'long', day: 'numeric', month: 'long'});
             
-            // Cálculo de fecha hebrea usando la API de Hebcal
-            fetch('https://www.hebcal.com/converter?cfg=json&gy=' + ahora.getFullYear() + '&gm=' + (ahora.getMonth() + 1) + '&gd=' + ahora.getDate() + '&g2h=1')
-                .then(res => res.json())
-                .then(d => { 
-                    document.getElementById('fecha-heb').innerText = d.hd + " de " + d.hm + ", " + d.hy; 
-                })
-                .catch(e => console.error("Error fecha hebrea:", e));
+            fetch('https://www.hebcal.com/converter?cfg=json&gy='+ahora.getFullYear()+'&gm='+(ahora.getMonth()+1)+'&gd='+ahora.getDate()+'&g2h=1')
+                .then(res => res.json()).then(d => {
+                    document.getElementById('fecha-heb').innerText = d.hd + " de " + d.hm + ", " + d.hy;
+                }).catch(e => console.log("Error Hebcal"));
         }
-
-        let data = { fotos: [], texto: [], zocalo: "" };
-        let idxF = 0; let idxT = 0;
-
-        dbRef.on('value', snap => {
-            const val = snap.val();
-            if(val) {
-                data = val;
-                document.getElementById('texto-zocalo').innerText = data.zocalo || "Comunidad Ajdut";
-            }
-        });
 
         function rotar() {
-            if (data.fotos && data.fotos.length > 0) {
-                idxF = (idxF + 1) % data.fotos.length;
-                const img = document.getElementById('foto-principal');
-                img.src = data.fotos[idxF].url;
+            if (!data.fotos || data.fotos.length === 0) return;
+
+            idxF = (idxF + 1) % data.fotos.length;
+            const item = data.fotos[idxF];
+            const img = document.getElementById('foto-principal');
+            const ytContainer = document.getElementById('contenedor-youtube');
+
+            if (item.url.includes('youtube.com') || item.url.includes('youtu.be') || item.formato === 'video') {
+                clearInterval(rotacionInterval);
+                document.body.classList.add('modo-video');
+                
+                let videoId = item.url.split('v=')[1] || item.url.split('/').pop();
+                if(videoId.includes('&')) videoId = videoId.split('&')[0];
+
+                img.style.display = 'none';
+                ytContainer.style.display = 'block';
+
+                if (!player) {
+                    player = new YT.Player('player-yt', {
+                        height: '100%', width: '100%', videoId: videoId,
+                        playerVars: { 'autoplay': 1, 'mute': 1, 'controls': 0, 'modestbranding': 1, 'rel': 0 },
+                        events: { 'onStateChange': onPlayerStateChange }
+                    });
+                } else {
+                    player.loadVideoById({ videoId: videoId });
+                    player.mute();
+                    player.playVideo();
+                }
+            } else {
+                document.body.classList.remove('modo-video');
+                ytContainer.style.display = 'none';
+                if(player) player.stopVideo();
+                
+                img.src = item.url;
                 img.style.display = 'block';
-            }
-            if (data.texto && data.texto.length > 0) {
-                const msgEl = document.getElementById('mensaje-texto');
-                msgEl.style.opacity = 0;
-                setTimeout(() => {
+
+                // Rotar texto solo si no hay video
+                if (data.texto && data.texto.length > 0) {
                     idxT = (idxT + 1) % data.texto.length;
-                    msgEl.innerText = data.texto[idxT];
-                    msgEl.style.opacity = 1;
-                }, 800);
+                    document.getElementById('mensaje-texto').innerText = data.texto[idxT];
+                }
             }
         }
 
-        setInterval(actualizarReloj, 1000);
-        setInterval(rotar, 10000);
-        actualizarReloj();
+        function onPlayerStateChange(event) {
+            if (event.data === YT.PlayerState.ENDED) {
+                restartInterval();
+                rotar();
+            }
+        }
+
+        function restartInterval() {
+            clearInterval(rotacionInterval);
+            rotacionInterval = setInterval(rotar, TIEMPO_FOTO);
+        }
+
+        // --- ANTI-SUEÑO TCL ---
+        function mantenerDespierto() {
+            window.scrollBy(0, 1);
+            window.scrollBy(0, -1);
+            if ('wakeLock' in navigator) {
+                navigator.wakeLock.request('screen').catch(err => {});
+            }
+        }
+        setInterval(mantenerDespierto, 30000);
+
+        // --- REFRESCO 3 AM ---
+        const ahora = new Date();
+        const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
+        let tiempoHasta 3AM = noche.getTime() - ahora.getTime();
+        if (tiempoHasta3AM < 0) tiempoHasta3AM += 86400000; 
+        setTimeout(() => { location.reload(); }, tiempoHasta3AM);
+
     </script>
 </body>
 </html>
