@@ -52,7 +52,6 @@
         }
         @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
 
-        /* MODO VIDEO */
         .modo-video .contenedor-texto, 
         .modo-video footer { display: none !important; }
         .modo-video .contenedor-foto { flex: 1; width: 100vw; height: 85vh; border-radius: 0; }
@@ -109,10 +108,12 @@
         let idxT = 0;
         let player;
         let rotacionInterval;
+        let youtubeReady = false;
         const TIEMPO_FOTO = 10000; 
 
         function onYouTubeIframeAPIReady() {
-            iniciarCartelera();
+            youtubeReady = true;
+            console.log("YouTube API Ready");
         }
 
         function iniciarCartelera() {
@@ -124,7 +125,11 @@
                 if(val) {
                     data = val;
                     if(data.zocalo) document.getElementById('texto-zocalo').innerText = data.zocalo;
-                    if(!rotacionInterval) restartInterval();
+                    // Forzar rotación inicial si no hay intervalo
+                    if(!rotacionInterval) {
+                        rotar();
+                        restartInterval();
+                    }
                 }
             });
         }
@@ -141,15 +146,21 @@
         }
 
         function rotar() {
-            if (!data.fotos || data.fotos.length === 0) return;
+            if (!data.fotos || data.fotos.length === 0) {
+                document.getElementById('mensaje-texto').innerText = (data.texto && data.texto.length > 0) ? data.texto[0] : "No hay anuncios";
+                return;
+            }
 
             idxF = (idxF + 1) % data.fotos.length;
             const item = data.fotos[idxF];
             const img = document.getElementById('foto-principal');
             const ytContainer = document.getElementById('contenedor-youtube');
 
-            if (item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
+            if (item.url && (item.url.includes('youtube.com') || item.url.includes('youtu.be'))) {
+                if(!youtubeReady) return; // Esperar a la API
+
                 clearInterval(rotacionInterval);
+                rotacionInterval = null;
                 document.body.classList.add('modo-video');
                 
                 let videoId = item.url.split('v=')[1] || item.url.split('/').pop();
@@ -181,15 +192,14 @@
                     idxT = (idxT + 1) % data.texto.length;
                     document.getElementById('mensaje-texto').innerText = data.texto[idxT];
                 }
-                // Si volvimos de un video, aseguramos que el intervalo corra
                 if(!rotacionInterval) restartInterval();
             }
         }
 
         function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.ENDED) {
-                restartInterval();
                 rotar();
+                restartInterval();
             }
         }
 
@@ -198,24 +208,22 @@
             rotacionInterval = setInterval(rotar, TIEMPO_FOTO);
         }
 
-        // --- ANTI-SUEÑO TCL ---
+        // Anti-sueño TCL
         setInterval(() => {
             window.scrollBy(0, 1);
             window.scrollBy(0, -1);
-            if ('wakeLock' in navigator) {
-                navigator.wakeLock.request('screen').catch(() => {});
-            }
+            if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
         }, 30000);
 
-        // --- REFREZCO 3 AM ---
-        function programarRefresco() {
-            const ahora = new Date();
-            const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
-            let tiempo = noche.getTime() - ahora.getTime();
-            if (tiempo < 0) tiempo += 86400000;
-            setTimeout(() => location.reload(), tiempo);
-        }
-        programarRefresco();
+        // Refresco 3 AM
+        const ahora = new Date();
+        const noche = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate(), 3, 0, 0);
+        let tiempoHasta3AM = noche.getTime() - ahora.getTime();
+        if (tiempoHasta3AM < 0) tiempoHasta3AM += 86400000;
+        setTimeout(() => location.reload(), tiempoHasta3AM);
+
+        // Arrancar
+        iniciarCartelera();
     </script>
 </body>
 </html>
