@@ -20,7 +20,7 @@
         #btnSubir.modo-edit { background: #27ae60; } 
         #btnSubir:hover { opacity: 0.9; }
 
-        #horarios { background: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #2e314f; display: none; }
+        #horarios { background: #f0f4f8; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px dashed #2e314f; display: block; }
         .dias-selector { display: flex; justify-content: space-between; margin-top: 10px; }
         .dias-selector label { font-size: 0.8rem; text-align: center; font-weight: normal; }
         .dias-selector input { width: auto; display: block; margin: 5px auto 0; }
@@ -59,19 +59,19 @@
     <div id="horarios">
         <label>VIGENCIA Y HORARIOS:</label>
         <div style="display: flex; gap: 10px;">
-            <input type="date" id="fecha-inicio">
-            <input type="date" id="fecha-fin">
+            <input type="date" id="fecha-inicio" placeholder="Inicio">
+            <input type="date" id="fecha-fin" placeholder="Fin">
         </div>
         <div style="display: flex; gap: 10px; margin-top: 10px;">
-            <input type="time" id="inicio" value="08:00"> 
-            <input type="time" id="fin" value="16:00">
+            <input type="time" id="inicio" placeholder="Hora Inicio"> 
+            <input type="time" id="fin" placeholder="Hora Fin">
         </div>
         <div class="dias-selector">
-            <label>L <input type="checkbox" class="dia-check" value="1" checked></label>
-            <label>M <input type="checkbox" class="dia-check" value="2" checked></label>
-            <label>M <input type="checkbox" class="dia-check" value="3" checked></label>
-            <label>J <input type="checkbox" class="dia-check" value="4" checked></label>
-            <label>V <input type="checkbox" class="dia-check" value="5" checked></label>
+            <label>L <input type="checkbox" class="dia-check" value="1"></label>
+            <label>M <input type="checkbox" class="dia-check" value="2"></label>
+            <label>M <input type="checkbox" class="dia-check" value="3"></label>
+            <label>J <input type="checkbox" class="dia-check" value="4"></label>
+            <label>V <input type="checkbox" class="dia-check" value="5"></label>
             <label>S <input type="checkbox" class="dia-check" value="6"></label>
             <label>D <input type="checkbox" class="dia-check" value="0"></label>
         </div>
@@ -110,13 +110,23 @@
     const btnSubir = document.getElementById('btnSubir');
 
     document.getElementById('tipo').onchange = function() {
-        document.getElementById('horarios').style.display = (this.value === 'evento') ? 'block' : 'none';
         if(this.value === 'video-yt') {
             document.getElementById('contenido').placeholder = "Pega el link de YT aquí (ej: https://www.youtube.com/watch?v=...)";
         } else {
             document.getElementById('contenido').placeholder = "Escribe el mensaje o pega el link aquí...";
         }
     };
+
+    function resetFormulario() {
+        document.getElementById('contenido').value = "";
+        document.getElementById('inicio').value = "";
+        document.getElementById('fin').value = "";
+        document.getElementById('fecha-inicio').value = "";
+        document.getElementById('fecha-fin').value = "";
+        document.querySelectorAll('.dia-check').forEach(cb => cb.checked = false);
+        btnSubir.innerText = "🚀 PUBLICAR AHORA";
+        btnSubir.classList.remove('modo-edit');
+    }
 
    btnSubir.onclick = function() {
         const sedes = Array.from(document.querySelectorAll('.sede-check:checked')).map(cb => cb.value);
@@ -131,6 +141,13 @@
         }
         // ------------------------------
 
+        // Captura de datos de programación (vigencia, horarios y días)
+        const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
+        const inicioVal = document.getElementById('inicio').value || null;
+        const finVal = document.getElementById('fin').value || null;
+        const fechaInicioVal = document.getElementById('fecha-inicio').value || null;
+        const fechaFinVal = document.getElementById('fecha-fin').value || null;
+
         sedes.forEach(sede => {
             const refSede = db.ref('cartelera/' + sede);
             refSede.once('value').then(snap => {
@@ -138,38 +155,57 @@
                 
                 if (tipo === 'texto') { 
                     if(!data.texto) data.texto=[]; 
-                    data.texto.push(cont); 
+                    data.texto.push({
+                        msg: cont,
+                        inicio: inicioVal, fin: finVal,
+                        dias: dias, fechaInicio: fechaInicioVal, fechaFin: fechaFinVal
+                    }); 
                 }
                 else if (tipo === 'foto') { 
                     if(!data.fotos) data.fotos=[]; 
-                    data.fotos.push({url: cont, formato: 'normal'}); 
+                    data.fotos.push({
+                        url: cont, formato: 'normal',
+                        inicio: inicioVal, fin: finVal,
+                        dias: dias, fechaInicio: fechaInicioVal, fechaFin: fechaFinVal
+                    }); 
                 }
                 else if (tipo === 'foto-completa') { 
                     if(!data.fotos) data.fotos=[]; 
-                    data.fotos.push({url: cont, formato: 'completa'}); 
+                    data.fotos.push({
+                        url: cont, formato: 'completa',
+                        inicio: inicioVal, fin: finVal,
+                        dias: dias, fechaInicio: fechaInicioVal, fechaFin: fechaFinVal
+                    }); 
                 }
                 else if (tipo === 'video-yt') { 
                     if(!data.fotos) data.fotos=[]; 
-                    data.fotos.push({url: cont, formato: 'video'}); 
+                    data.fotos.push({
+                        url: cont, formato: 'video',
+                        inicio: inicioVal, fin: finVal,
+                        dias: dias, fechaInicio: fechaInicioVal, fechaFin: fechaFinVal
+                    }); 
                 }
                 else if (tipo === 'zocalo') {
-                    data.zocalo = cont;
+                    // Mantenemos el zócalo estructurado con programación
+                    data.zocalo = {
+                        msg: cont,
+                        inicio: inicioVal, fin: finVal,
+                        dias: dias, fechaInicio: fechaInicioVal, fechaFin: fechaFinVal
+                    };
                 }
                 else if (tipo === 'evento') {
                     if(!data.eventos) data.eventos = [];
-                    const dias = Array.from(document.querySelectorAll('.dia-check:checked')).map(cb => parseInt(cb.value));
                     data.eventos.push({
-                        msg: cont, inicio: document.getElementById('inicio').value, fin: document.getElementById('fin').value,
-                        dias: dias, fechaInicio: document.getElementById('fecha-inicio').value || null, fechaFin: document.getElementById('fecha-fin').value || null
+                        msg: cont, 
+                        inicio: inicioVal, fin: finVal,
+                        dias: dias, fechaInicio: fechaInicioVal, fechaFin: fechaFinVal
                     });
                 }
                 return refSede.set(data);
             });
         });
         
-        btnSubir.innerText = "🚀 PUBLICAR AHORA";
-        btnSubir.classList.remove('modo-edit');
-        document.getElementById('contenido').value = "";
+        resetFormulario();
         alert("¡Publicado con éxito!");
     };
 
@@ -181,17 +217,34 @@
             h.innerHTML = "";
             if(!data) { h.innerHTML = "Sede vacía."; return; }
 
-            if(data.texto) data.texto.forEach((t, i) => h.innerHTML += itemHTML(`📝 ${t.substring(0,25)}...`, 'texto', i));
+            if(data.texto) {
+                data.texto.forEach((t, i) => {
+                    const mensaje = (typeof t === 'object') ? t.msg : t;
+                    h.innerHTML += itemHTML(`📝 ${mensaje.substring(0,25)}...`, 'texto', i);
+                });
+            }
             
-            if(data.fotos) data.fotos.forEach((f, i) => {
-                const icono = f.formato === 'video' ? '🎬' : '🖼️';
-                const nombre = f.formato === 'video' ? 'Video YouTube' : (f.formato === 'completa' ? 'Foto Completa' : 'Foto Normal');
-                h.innerHTML += itemHTML(`${icono} ${nombre} ${i+1}`, 'fotos', i);
-            });
+            if(data.fotos) {
+                data.fotos.forEach((f, i) => {
+                    const icono = f.formato === 'video' ? '🎬' : '🖼️';
+                    const nombre = f.formato === 'video' ? 'Video YouTube' : (f.formato === 'completa' ? 'Foto Completa' : 'Foto Normal');
+                    h.innerHTML += itemHTML(`${icono} ${nombre} ${i+1}`, 'fotos', i);
+                });
+            }
 
-            if(data.eventos) data.eventos.forEach((e, i) => h.innerHTML += itemHTML(`⚠️ BLOQUEO: ${e.msg.substring(0,15)}...`, 'eventos', i));
+            if(data.eventos) {
+                data.eventos.forEach((e, i) => {
+                    const mensaje = (typeof e === 'object') ? e.msg : e;
+                    h.innerHTML += itemHTML(`⚠️ BLOQUEO: ${mensaje.substring(0,15)}...`, 'eventos', i);
+                });
+            }
             
-            if(data.zocalo) h.innerHTML += itemHTML(`🎞️ Zócalo: ${data.zocalo.substring(0,20)}...`, 'zocalo', 0);
+            if(data.zocalo) {
+                const mensaje = (typeof data.zocalo === 'object') ? data.zocalo.msg : data.zocalo;
+                if (mensaje) {
+                    h.innerHTML += itemHTML(`🎞️ Zócalo: ${mensaje.substring(0,20)}...`, 'zocalo', 0);
+                }
+            }
         });
     }
 
@@ -208,7 +261,17 @@
             const data = snap.val();
             const item = (cat === 'zocalo') ? data.zocalo : data[cat][i];
 
-            document.getElementById('contenido').value = (cat === 'fotos') ? item.url : (cat === 'eventos' ? item.msg : item);
+            // Determinamos el contenido según el objeto guardado
+            let contenidoVal = "";
+            if (cat === 'fotos') {
+                contenidoVal = item.url;
+            } else if (cat === 'zocalo') {
+                contenidoVal = (typeof item === 'object') ? item.msg : item;
+            } else {
+                contenidoVal = (typeof item === 'object') ? item.msg : item;
+            }
+
+            document.getElementById('contenido').value = contenidoVal;
             const sel = document.getElementById('tipo');
             
             if (cat === 'texto') sel.value = 'texto';
@@ -218,14 +281,26 @@
                 else if (item.formato === 'completa') sel.value = 'foto-completa';
                 else sel.value = 'foto';
             }
-            else if (cat === 'eventos') {
-                sel.value = 'evento';
-                document.getElementById('horarios').style.display = 'block';
-                document.getElementById('inicio').value = item.inicio;
-                document.getElementById('fin').value = item.fin;
+            else if (cat === 'eventos') sel.value = 'evento';
+            
+            // Cargar datos de programación si existen en el objeto
+            if (typeof item === 'object') {
+                document.getElementById('inicio').value = item.inicio || "";
+                document.getElementById('fin').value = item.fin || "";
                 document.getElementById('fecha-inicio').value = item.fechaInicio || "";
                 document.getElementById('fecha-fin').value = item.fechaFin || "";
-                document.querySelectorAll('.dia-check').forEach(cb => cb.checked = item.dias.includes(parseInt(cb.value)));
+                
+                const diasGuardados = item.dias || [];
+                document.querySelectorAll('.dia-check').forEach(cb => {
+                    cb.checked = diasGuardados.includes(parseInt(cb.value));
+                });
+            } else {
+                // Si el registro de la DB era viejo y no tenía objeto de programación
+                document.getElementById('inicio').value = "";
+                document.getElementById('fin').value = "";
+                document.getElementById('fecha-inicio').value = "";
+                document.getElementById('fecha-fin').value = "";
+                document.querySelectorAll('.dia-check').forEach(cb => cb.checked = false);
             }
             
             document.querySelectorAll('.sede-check').forEach(cb => cb.checked = (cb.value === sede));
