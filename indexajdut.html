@@ -3,60 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Visor Vertical - Ajdut Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
+    <title>Visor Horizontal - Ajdut Pro</title>
+    <link href="https://fonts.googleapis.com/css2 family=Inter:wght@400;700;800&display=swap" rel="stylesheet">
     <style>
         body { 
-            margin: 0; background-color: #2e314f; color: white; 
+            margin: 0; background-color: #050c14; color: #ffffff; 
             font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; 
             display: flex; flex-direction: column; 
         }
 
         header { 
-            height: 12vh; background: rgba(0,0,0,0.5); 
+            height: 12vh; background: #0a192f; 
             display: flex; justify-content: space-between; align-items: center; 
-            padding: 0 40px; border-bottom: 2px solid #d4af37; box-sizing: border-box;
+            padding: 0 40px; border-bottom: 2px solid #3b82f6; box-sizing: border-box;
             flex-shrink: 0; z-index: 10;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
         .logo-ajdut { height: 8vh; width: auto; object-fit: contain; }
 
         .fechas-container { flex: 1; text-align: center; display: flex; flex-direction: column; gap: 5px; }
-        #fecha-greg { font-size: 1.4rem; color: #d4af37; font-weight: 700; text-transform: capitalize; }
-        #fecha-heb { font-size: 1.1rem; color: #ffffff; font-weight: 400; }
+        #fecha-greg { font-size: 1.4rem; color: #3b82f6; font-weight: 700; text-transform: capitalize; }
+        #fecha-heb { font-size: 1.1rem; color: #a0aec0; font-weight: 400; }
 
-        #reloj { font-size: 3.5rem; font-weight: 200; text-align: right; min-width: 150px; }
+        #reloj { font-size: 3.5rem; font-weight: 200; text-align: right; min-width: 150px; color: #ffffff; }
 
-        .contenido-vertical {
-            flex: 1; display: flex; flex-direction: column; 
+        /* DISTRIBUCIÓN HORIZONTAL (Dos columnas principales) */
+        .contenido-horizontal {
+            flex: 1; display: flex; flex-direction: row; 
             padding: 20px; box-sizing: border-box; gap: 20px;
             overflow: hidden; transition: all 0.5s ease;
         }
 
+        /* Columna Izquierda: Foto / Video (60% de ancho) */
         .marco-foto {
-            flex: 2; width: 100%; display: flex; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; position: relative;
+            flex: 1.5; height: 100%; display: flex; align-items: center; justify-content: center;
+            background: #0a192f; border-radius: 20px; overflow: hidden; position: relative;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
-        #foto-principal { max-width: 100%; max-height: 100%; object-fit: contain; }
+        #foto-principal { width: 100%; height: 100%; object-fit: cover; }
 
+        /* Columna Derecha: Texto Rotativo (40% de ancho) */
         .caja-mensajes {
             flex: 1; display: flex; align-items: center; justify-content: center;
-            text-align: center; background: rgba(255,255,255,0.05); border-radius: 20px; padding: 20px;
+            text-align: center; background: linear-gradient(135deg, #0a192f 0%, #0d2547 100%); 
+            border-radius: 20px; padding: 40px; box-sizing: border-box;
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
-        #mensaje-texto { font-size: 3rem; font-weight: 800; color: #f5d76e; line-height: 1.2; }
+        #mensaje-texto { font-size: 2.6rem; font-weight: 800; color: #ffffff; line-height: 1.3; }
 
         footer { 
-            height: 8vh; background: #5d1a1a; display: flex; align-items: center; 
-            overflow: hidden; flex-shrink: 0; border-top: 2px solid #d4af37;
+            height: 8vh; background: #0d2547; display: flex; align-items: center; 
+            overflow: hidden; flex-shrink: 0; border-top: 2px solid #3b82f6;
         }
-        .marquee { font-size: 2.2rem; font-weight: bold; white-space: nowrap; animation: scroll 25s linear infinite; }
+        .marquee { font-size: 2.2rem; font-weight: bold; color: #3b82f6; white-space: nowrap; animation: scroll 25s linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
 
-        /* MODO VIDEO VERTICAL */
+        /* MODO VIDEO EN PANTALLA COMPLETA APRECIABLE EN HORIZONTAL */
         .modo-video .caja-mensajes, 
         .modo-video footer { display: none !important; }
-        .modo-video .marco-foto { flex: 1; height: 88vh; border-radius: 0; background: black; }
-        .modo-video .contenido-vertical { padding: 0; }
+        .modo-video .marco-foto { flex: 1; height: 88vh; border-radius: 0; background: black; border: none; }
+        .modo-video .contenido-horizontal { padding: 0; }
     </style>
 </head>
 <body>
@@ -70,7 +79,7 @@
         <div id="reloj">00:00</div>
     </header>
 
-    <div class="contenido-vertical" id="main-container">
+    <div class="contenido-horizontal" id="main-container">
         <div class="marco-foto" id="media-box">
             <img id="foto-principal" src="" style="display:none;">
             <div id="contenedor-youtube" style="display:none; width:100%; height:100%;">
@@ -212,6 +221,7 @@
             }
         }
 
+        // Detección de fin de video
         function onPlayerStateChange(event) {
             if (event.data === YT.PlayerState.ENDED) {
                 clearTimeout(seguroVideo);
@@ -225,7 +235,7 @@
             rotacionInterval = setInterval(rotar, TIEMPO_FOTO);
         }
 
-        // 4. Arranque cuando la ventana esté lista
+        // 4. Arranque del sistema
         window.addEventListener('load', () => {
             actualizarReloj();
             setInterval(actualizarReloj, 1000);
@@ -246,7 +256,7 @@
             });
         });
 
-        // Mantenimiento y anti-bloqueo
+        // Prevención de protector de pantalla e inactividad
         setInterval(() => {
             window.scrollBy(0, 1); window.scrollBy(0, -1);
             if ('wakeLock' in navigator) navigator.wakeLock.request('screen').catch(()=>{});
