@@ -20,11 +20,13 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         }
 
-        .logo-ajdut { height: 8vh; width: auto; object-fit: contain; }
+        /* LOGO AGRANDADO: Pasó de 8vh a 10vh para mayor presencia */
+        .logo-ajdut { height: 10vh; width: auto; object-fit: contain; }
 
         .fechas-container { flex: 1; text-align: center; display: flex; flex-direction: column; gap: 5px; }
         #fecha-greg { font-size: 1.4rem; color: #3b82f6; font-weight: 700; text-transform: capitalize; }
-        #fecha-heb { font-size: 1.1rem; color: #a0aec0; font-weight: 400; }
+        /* CORRECCIÓN: Fecha hebrea ahora en blanco */
+        #fecha-heb { font-size: 1.1rem; color: #ffffff; font-weight: 400; }
 
         #reloj { font-size: 3.5rem; font-weight: 200; text-align: right; min-width: 150px; color: #ffffff; }
 
@@ -38,19 +40,17 @@
         /* Columna Izquierda: Foto / Video (60% de ancho) */
         .marco-foto {
             flex: 1.5; height: 100%; display: flex; align-items: center; justify-content: center;
-            /* Fondo oscuro para rellenar si la imagen no coincide en proporción */
             background-color: #03080f; 
             border-radius: 20px; overflow: hidden; position: relative;
             border: 1px solid rgba(59, 130, 246, 0.2);
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
         }
 
-        /* CORRECCIÓN AQUÍ: object-fit: contain asegura que se vea TODA la imagen */
         #foto-principal { 
             width: 100%; 
             height: 100%; 
             object-fit: contain; 
-            background-color: #03080f; /* Refuerzo de fondo */
+            background-color: #03080f;
         }
 
         /* Columna Derecha: Texto Rotativo (40% de ancho) */
@@ -67,7 +67,8 @@
             height: 8vh; background: #0d2547; display: flex; align-items: center; 
             overflow: hidden; flex-shrink: 0; border-top: 2px solid #3b82f6;
         }
-        .marquee { font-size: 2.2rem; font-weight: bold; color: #3b82f6; white-space: nowrap; animation: scroll 25s linear infinite; }
+        /* CORRECCIÓN: El texto del zócalo ahora es completamente blanco */
+        .marquee { font-size: 2.2rem; font-weight: bold; color: #ffffff; white-space: nowrap; animation: scroll 25s linear infinite; }
         @keyframes scroll { 0% { transform: translateX(100vw); } 100% { transform: translateX(-100%); } }
 
         /* MODO VIDEO */
@@ -129,6 +130,8 @@
 
         function onYouTubeIframeAPIReady() { youtubeReady = true; }
 
+        // El color del título de la fecha gregoriana se mantuvo en azul (#3b82f6) 
+        // para conservar el contraste estético de marca, pero el resto pasó a blanco.
         function actualizarReloj() {
             const ahora = new Date();
             document.getElementById('reloj').innerText = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
