@@ -21,7 +21,12 @@
         }
 
         /* LOGO AGRANDADO: Pasó de 8vh a 10vh para mayor presencia */
-        .logo-ajdut { height: 30vh; width: auto; object-fit: contain; }
+       .logo-ajdut { 
+    height: 25vh; 
+    max-height: 80%; /* Evita que toque los bordes y fuerza el centrado vertical */
+    width: auto; 
+    object-fit: contain; 
+}
 
         .fechas-container { flex: 1; text-align: center; display: flex; flex-direction: column; gap: 5px; }
         #fecha-greg { font-size: 1.4rem; color: #ffffff; font-weight: 700; text-transform: capitalize; }
